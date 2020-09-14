@@ -29,6 +29,10 @@ return html`
     display: none;
   }
 
+  #rasterCanvasBlocks {
+    display: none;
+  }
+
   .bands {
     margin: 15px 0 15px 50px;
   }
@@ -84,7 +88,7 @@ return html`
     <div class="map-layout" 
       id="map" 
       @mousedown="${this._onMouseDown}"
-      @scroll="${this._onScroll}"
+      @wheel="${this._onScroll}"
       style="height: ${this.canvasHeight}px; width:${this.canvasWidth}px">
       <!-- <img src="/images/B2-goes17.jpg" 
         ?hidden="${this.imageModeEnabled}" 
@@ -113,5 +117,7 @@ return html`
   width="${this.canvasWidth}" 
   style="height: ${this.canvasHeight}px; width:${this.canvasWidth}px">
 </canvas>
+<div id="rasterCanvasBlocks"></div>
+
 
 `;}

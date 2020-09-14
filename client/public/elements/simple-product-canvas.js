@@ -48,17 +48,67 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
 
     this.data = {};
 
-    this.renderImgCanvasTimer = -1;
+    this.rebalanceImgColorTimer = -1;
     this.unhandledResize = false;
 
     this._injectModel('AppStateModel', 'SocketModel');
 
-    worker.onmessage = e => this._renderImgCanvasAfterBalance(e);
+    worker.onmessage = e => this._onColorRebalanceWorkerComplete(e);
 
     window.addEventListener('mousemove', e => this._onMouseMove(e));
     window.addEventListener('mouseup', e => this._onMouseUp(e));
     window.addEventListener('mouseout', e => this._onMouseOut(e));
     window.addEventListener('resize', () => this.onResize());
+  }
+
+  _onScroll(e) {
+    let orgZoom = this.mapView.zoom;
+
+    if( e.deltaY > 0 ) this.mapView.zoom += 0.2;
+    else this.mapView.zoom -= 0.2;
+
+
+    
+
+    let zoomDiff = this.mapView.zoom - orgZoom;
+
+    let startRes = this.scaleFactor * orgZoom;
+    let endRes = this.scaleFactor * this.mapView.zoom;
+
+    let h = this.scaleFactor * this.mapView.zoom;
+
+    let ohw = (w * orgZoom);
+    let ohh = (h * orgZoom);
+
+    let chw = (w * this.mapView.zoom);
+    let chh = (h * this.mapView.zoom);
+
+    // // orgZoom = 4;
+    // // this.mapView.zoom = 8;
+
+    // let ohw = (this.canvasWidth / orgZoom);
+    // let ohh = (this.canvasHeight / orgZoom);
+
+    // let chw = (this.canvasWidth / this.mapView.zoom);
+    // let chh = (this.canvasHeight / this.mapView.zoom);
+
+    // // debugger;
+    // // console.log(chw - ohw, chh - ohh);
+    let diffX = chw - ohw;
+    let diffY = chh - ohh;
+    // let diffX = (hw * this.mapView.zoom) - (hw * orgZoom);
+    // let diffY = (hh * this.mapView.zoom) - (hh * orgZoom);
+
+    // // console.log(this.mapView.zoom, orgZoom, diffX, diffY);
+    // console.log(this.mapView.zoom, diffX, diffY);
+    console.log(this.mapView.zoom, diffX, diffY, ohw, chw);
+    this.mapView.offset = {
+      x :  diffX/2,
+      y : diffY/2
+    }
+    console.log(this.mapView.offset);
+
+    this.mapView.zoomChange = true;
   }
 
   _onMouseDown(e) {
@@ -70,23 +120,21 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
     this.mapView.panStart = [
       e.clientX, e.clientY
     ];
-
-    requestAnimationFrame(() => this.redraw());
   }
 
   _onMouseUp(e) {
     if( !this.mapView.panning ) return;
-    this.mapView.offset = {
-      x : this.mapView.panStartOffset[0] + e.clientX - this.mapView.panStart[0],
-      y : this.mapView.panStartOffset[1] + e.clientY - this.mapView.panStart[1]
-    }
+    this.mapView.panning = false;
   }
 
   _onMouseMove(e) {
     if( !this.mapView.panning ) return;
+    let diffX = e.clientX - this.mapView.panStart[0];
+    let diffY = e.clientY - this.mapView.panStart[1];
+
     this.mapView.offset = {
-      x : this.mapView.panStartOffset[0] + e.clientX - this.mapView.panStart[0],
-      y : this.mapView.panStartOffset[1] + e.clientY - this.mapView.panStart[1]
+      x : this.mapView.panStartOffset[0] + diffX ,
+      y : this.mapView.panStartOffset[1] + diffY
     }
   }
 
@@ -141,7 +189,7 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
 
     this.unhandledResize = true;
 
-    if( !first ) this.renderImgCanvas();
+    // if( !first ) this.renderImgCanvas();
   }
 
   _onAppStateUpdate(e) {
@@ -198,12 +246,8 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
 
   addBlock(value) {
     value.age = Date.now();
-    let block = blockStore.setBlock(value, this);
-    this.onRenderImgBlock(block);
-    // if( !block.handlerSet ) {
-    //   block.handlerSet = true;
-    //   block.on('new-image-ready', (block) => this.onRenderImgBlock(block));
-    // }
+    blockStore.setBlock(value, this);
+    this.rebalanceImgColor();
   }
 
   setLightning(lightning) {
@@ -259,56 +303,46 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
       blockStore.blocks[id].redraw(this.context, this.scaleFactor, now);
     }
 
-    // requestAnimationFrame(() => {
-    //   requestAnimationFrame(() => {
-    //     requestAnimationFrame(() => this.redraw());
-    //   });
-    // });
-  }
-
-  onRenderImgBlock(block) {
-    this.renderImgCanvas(block);
-  }
-
-  renderImgCanvas(block, resize=false) {
-    if( block ) {
-      block.redrawImg(this.imgContext, this.scaleFactor, this.scaleFactorLR);
+    if( this.mapView.panning || this.mapView.zoomChange) {
+      this.balancedContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+      this.redrawImgBlocks();
+      this.redrawRasterMask();
     }
 
-    if( this.renderImgCanvasTimer !== -1 ) {
-      clearTimeout(this.renderImgCanvasTimer);
+    this.mapView.zoomChange = false;
+
+    requestAnimationFrame(() => {
+      // requestAnimationFrame(() => {
+        requestAnimationFrame(() => this.redraw());
+      // });
+    });
+  }
+
+  rebalanceImgColor() {
+    if( this.rebalanceImgColorTimer !== -1 ) {
+      clearTimeout(this.rebalanceImgColorTimer);
     }
 
-    this.renderImgCanvasTimer = setTimeout(() => {
-      this.renderImgCanvasTimer = -1;
-      this._renderImgCanvas();
+    this.rebalanceImgColorTimer = setTimeout(() => {
+      this.rebalanceImgColorTimer = -1;
+      this._rebalanceImgColor();
     }, 500);
   }
 
-  _renderImgCanvas(forceFullRender=false) {
-    // console.time('image canvas render');
+  _rebalanceImgColor() {
+    console.log('color rebalance start');
 
-    // this.imgContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-
-    if( this.unhandledResize || forceFullRender ) {
-      this.unhandledResize = false;
-
-      if( this.backgroundImage ) {
-        this.imgContext.drawImage(this.backgroundImage, 0, 0, this.canvasWidth, this.canvasHeight);
-      }
-
-      for( let id in blockStore.blocks ) {
-        blockStore.blocks[id].redrawImg(this.imgContext, this.scaleFactor);
-      }
+    let data = [], block;
+    for( let id in blockStore.blocks ) {
+      block = blockStore.blocks[id];
+      data.push({
+        id,
+        data: block.canvasImgData
+      });
     }
 
-    console.log('color balance');
-    // color balance block store
-    let imgData = this.imgContext.getImageData(0, 0, this.canvasWidth, this.canvasHeight);
     worker.postMessage({
-      data: imgData.data, 
-      width: this.canvasWidth, 
-      height: this.canvasHeight,
+      data: data,
       min : this.absMin,
       max : this.absMax
     });
@@ -317,38 +351,57 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
   _onHistogramBoundsChange(e) {
     this.absMin = e.detail.min;
     this.absMax = e.detail.max;
-    this.renderImgCanvas();
+    this.rebalanceImgColor();
+    // this.renderImgCanvas();
   }
 
-  _renderImgCanvasAfterBalance(e) {
+  _onColorRebalanceWorkerComplete(e) {
     this.histogram = e.data.histogram;
-    this.finalRaster = new ImageData(e.data.data, e.data.width, e.data.height);
-    this.redrawRaster();
-  }
-
-  redrawRaster() {
-    if( !this.finalRaster ) return;
 
     this.balancedContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-    this.balancedContext.putImageData(this.finalRaster, this.mapView.offset.x, this.mapView.offset.y);
-    this.balancedContext.beginPath();
-    this.balancedContext.rect(
-      this.mapView.offset.x, this.mapView.offset.y,
-      this.canvasWidth,
-      this.canvasHeight
-    );
 
-    this.balancedContext.arc(
-      this.canvasWidth/2 - this.mapView.offset.x, 
-      this.canvasHeight/2 - this.mapView.offset.y, 
-      Math.floor((this.canvasWidth-4)/2), // radius
-      0, 
-      2 * Math.PI
-    );
+    for( let block of e.data.data ) {
+      let blockRender = blockStore.blocks[block.id];
+      blockRender.setBalancedData(block.data);
+    }
+    this.redrawImgBlocks();
+    this.redrawRasterMask();
+  }
 
-    this.balancedContext.closePath();
-    this.balancedContext.fillStyle = 'black';
-    this.balancedContext.fill('evenodd');
+  redrawImgBlocks() {
+    let blocks = Object.values(blockStore.blocks);
+    blocks.sort((a, b) => a.lastUpdated < b.lastUpdated ? -1 : 1);
+    for( let block of blocks ) {
+      block.redrawImg(this.balancedContext, this.scaleFactor);
+    }
+  }
+
+  
+  redrawRasterMask() {
+    return;
+    try {
+      this.balancedContext.beginPath();
+
+      this.balancedContext.rect(
+        0, 0,
+        this.canvasWidth,
+        this.canvasHeight
+      );
+
+      this.balancedContext.arc(
+        ((this.canvasWidth * this.mapView.zoom)/2) + this.mapView.offset.x,
+        ((this.canvasHeight * this.mapView.zoom)/2) + this.mapView.offset.y, 
+        Math.floor((this.canvasWidth-4)/2) * this.mapView.zoom, // radius
+        0, 
+        2 * Math.PI
+      );
+
+      this.balancedContext.closePath();
+      this.balancedContext.fillStyle = 'blue';
+      this.balancedContext.fill('evenodd');
+    } catch(e) {
+
+    }
   }
 
   fit(val, min, max) {
@@ -371,7 +424,6 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
     }
     let blockGroups = blockStore.getBlocks(x, y);
     blockGroups.forEach(block => block.selected = true);
-    console.log(blockGroups);
 
     this.AppStateModel.set({selectedBlockGroups: blockGroups});
   }

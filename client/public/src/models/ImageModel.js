@@ -81,7 +81,6 @@ class ImageModel extends BaseModel {
 
       block.location.original.offset = [x, y];
       block.location.scaled.offset = [x * initImageScale, y * initImageScale];
-      console.log([x * initImageScale, y * initImageScale]);
     }
 
     if( scale === 'mesoscale' ) {

@@ -14,14 +14,17 @@ class BlockStore {
       // destroy blocks if mode changes
       if( e.mode !== this.imageMode ) {
         this.imageMode = e.mode;
+        for( let id in this.blocks ) {
+          this.blocks[id].destroy();
+        }
         this.blocks = {};
       }
     });
   }
 
   getId(block) {
-    return block.apid+'-'+block.location.projected.top+'-'+block.location.projected.left+'-'+
-    block.location.projected.bottom+'-'+block.location.projected.right;
+    return block.apid+'-'+block.location.original.tl[0]+'-'+block.location.original.tl[1]+
+      '-'+block.location.original.offset[0]+'-'+block.location.original.offset[1];
   }
 
   setBlock(block, map) {
@@ -30,27 +33,23 @@ class BlockStore {
     // let offsetTop = this.getOffset(block.apid, block.band, true);
     // let offsetLeft = this.getOffset(block.apid, block.band);
 
-    let left = block.location.scaled.tl[0];
-    let top = block.location.scaled.tl[1];
-    let right = block.location.scaled.width + left;
-    let bottom = block.location.scaled.height + top;
+    // let left = block.location.scaled.tl[0];
+    // let top = block.location.scaled.tl[1];
+    // let right = block.location.scaled.width + left;
+    // let bottom = block.location.scaled.height + top;
 
-    block.location.projected = {
-      top : this.scale(top, block.band) + offsetTop,
-      left : this.scale(left, block.band) + offsetLeft,
-      right : this.scale(right, block.band) + offsetLeft,
-      bottom : this.scale(bottom, block.band) + offsetTop
-    }
+    // block.location.projected = {
+    //   top : this.scale(top, block.band) + offsetTop,
+    //   left : this.scale(left, block.band) + offsetLeft,
+    //   right : this.scale(right, block.band) + offsetLeft,
+    //   bottom : this.scale(bottom, block.band) + offsetTop
+    // }
 
     let id = this.getId(block);
 
     let blockGroup = this.blocks[id];
     if( !blockGroup ) {
-      blockGroup = new MapBlockRenderer(
-        block,
-        this.imageMode, 
-        map
-      );
+      blockGroup = new MapBlockRenderer(map);
       this.blocks[id] = blockGroup;
     }
 
