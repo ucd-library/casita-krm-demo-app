@@ -1,0 +1,30 @@
+{
+  "name": "goes-r-packet-receiver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "cd client && webpack --config webpack-watch.config.js --watch",
+    "dist": "cd client && ./build.sh"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ucd-lib/goes-r-packet-decoder": "0.0.2",
+    "@ucd-lib/spa-router-middleware": "^0.1.0",
+    "busboy": "^0.3.1",
+    "express": "^4.17.1",
+    "jimp": "^0.8.5",
+    "pngjs": "^3.4.0",
+    "proj4": "^2.5.0",
+    "regenerator-runtime": "^0.13.3",
+    "socket.io": "^2.3.0",
+    "uuid": "^3.3.3"
+  },
+  "devDependencies": {
+    "@ucd-lib/cork-app-build": "^0.1.5",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10"
+  }
+}
