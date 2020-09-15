@@ -27,8 +27,6 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
     super();
     this.render = render.bind(this);
 
-    this.scaleFactor = 25;
-
     this.filters = [];
     this.filtered = {};
     this.lightning = [];
@@ -64,49 +62,25 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
   _onScroll(e) {
     let orgZoom = this.mapView.zoom;
 
-    if( e.deltaY > 0 ) this.mapView.zoom += 0.2;
-    else this.mapView.zoom -= 0.2;
+    if( e.deltaY > 0 ) this.mapView.zoom -= 0.2;
+    else this.mapView.zoom += 0.2;
 
+    if( this.mapView.zoom > 7 ) this.mapView.zoom = 7;
+    if( this.mapView.zoom < 0.6 ) this.mapView.zoom = 0.6;
 
-    
+    let centerX = this.canvasWidth/2;
+    let centerY = this.canvasHeight/2;
 
-    let zoomDiff = this.mapView.zoom - orgZoom;
+    let xMap = (centerX - this.mapView.offset.x) * orgZoom;
+    let yMap = (centerY - this.mapView.offset.y) * orgZoom;
 
-    let startRes = this.scaleFactor * orgZoom;
-    let endRes = this.scaleFactor * this.mapView.zoom;
+    let newOffsetX = centerX - (xMap / this.mapView.zoom);
+    let newOffsetY = centerY - (yMap / this.mapView.zoom);
 
-    let h = this.scaleFactor * this.mapView.zoom;
-
-    let ohw = (w * orgZoom);
-    let ohh = (h * orgZoom);
-
-    let chw = (w * this.mapView.zoom);
-    let chh = (h * this.mapView.zoom);
-
-    // // orgZoom = 4;
-    // // this.mapView.zoom = 8;
-
-    // let ohw = (this.canvasWidth / orgZoom);
-    // let ohh = (this.canvasHeight / orgZoom);
-
-    // let chw = (this.canvasWidth / this.mapView.zoom);
-    // let chh = (this.canvasHeight / this.mapView.zoom);
-
-    // // debugger;
-    // // console.log(chw - ohw, chh - ohh);
-    let diffX = chw - ohw;
-    let diffY = chh - ohh;
-    // let diffX = (hw * this.mapView.zoom) - (hw * orgZoom);
-    // let diffY = (hh * this.mapView.zoom) - (hh * orgZoom);
-
-    // // console.log(this.mapView.zoom, orgZoom, diffX, diffY);
-    // console.log(this.mapView.zoom, diffX, diffY);
-    console.log(this.mapView.zoom, diffX, diffY, ohw, chw);
     this.mapView.offset = {
-      x :  diffX/2,
-      y : diffY/2
+      x : newOffsetX,
+      y : newOffsetY,
     }
-    console.log(this.mapView.offset);
 
     this.mapView.zoomChange = true;
   }
@@ -179,10 +153,10 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
     this.canvasHeight = size;
     this.canvasWidth = size;
 
-    this.scaleFactor = 2732 / size;
-    this.scaleFactorLR = 2712 / size;
-    // this.scaleFactor = this.imageProductDef.size[0] / size;
-    // this.scaleFactorLR = this.imageProductDef.size[1] / size;
+    if( first ) {
+      if( w < h ) this.mapView.zoom = 2732 / size;
+      else this.mapView.zoom = 2712 / size;
+    }
 
     if( w > 768 ) this.infoOpen = false;
     else if( w < 768 ) this.infoOpen = true;
@@ -295,12 +269,12 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
 
     let now = Date.now();
     
-    for( let strike of strikeStore.strikes ) {
-      strike.redraw(this.context, this.scaleFactor, now);
-    }
+    // for( let strike of strikeStore.strikes ) {
+    //   strike.redraw(this.context, this.scaleFactor, now);
+    // }
     
     for( let id in blockStore.blocks ) {
-      blockStore.blocks[id].redraw(this.context, this.scaleFactor, now);
+      blockStore.blocks[id].redraw(this.context, now);
     }
 
     if( this.mapView.panning || this.mapView.zoomChange) {
@@ -372,7 +346,7 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
     let blocks = Object.values(blockStore.blocks);
     blocks.sort((a, b) => a.lastUpdated < b.lastUpdated ? -1 : 1);
     for( let block of blocks ) {
-      block.redrawImg(this.balancedContext, this.scaleFactor);
+      block.redrawImg(this.balancedContext);
     }
   }
 
@@ -416,8 +390,8 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
 
   _onCanvasClicked(e) {
     let elePos = e.currentTarget.getBoundingClientRect();
-    let x = Math.round((e.x - elePos.x) * this.scaleFactor);
-    let y = Math.round((e.y - elePos.y) * this.scaleFactor);
+    let x = Math.round((e.x - elePos.x) * this.mapView.zoom);
+    let y = Math.round((e.y - elePos.y) * this.mapView.zoom);
 
     for( let id in blockStore.blocks ) {
       blockStore.blocks[id].selected = false;

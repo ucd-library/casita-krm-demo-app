@@ -46,32 +46,29 @@ class MapBlockRenderer extends EventEmitter {
     this.canvasCtx.putImageData(new ImageData(data.data, data.width, data.height), 0, 0);
   }
 
-  getTLBR(scaleFactor=1) {
+  getTLBR() {
     let left = (this.block.location.scaled.tl[0] + this.block.location.scaled.offset[0]);
     let top = (this.block.location.scaled.tl[1] + this.block.location.scaled.offset[1]);
-    let right = (this.block.location.scaled.width + left) / scaleFactor;
-    let bottom = (this.block.location.scaled.height + top) / scaleFactor;
+    let right = (this.block.location.scaled.width + left) / this.map.mapView.zoom;
+    let bottom = (this.block.location.scaled.height + top) / this.map.mapView.zoom;
 
-    top = top/scaleFactor;
-    left = left/scaleFactor;
-
-
-    right = right * this.map.mapView.zoom;
-    left = left * this.map.mapView.zoom;
-    top = top * this.map.mapView.zoom;
-    bottom = bottom * this.map.mapView.zoom;
+    top = top / this.map.mapView.zoom;
+    left = left / this.map.mapView.zoom;
 
     right += this.map.mapView.offset.x
     left += this.map.mapView.offset.x;
     top += this.map.mapView.offset.y;
     bottom += this.map.mapView.offset.y;
 
-
-
-    return {top, left, bottom, right};
+    return {
+      top : Math.floor(top), 
+      left : Math.floor(left), 
+      bottom: Math.floor(bottom), 
+      right: Math.floor(right)
+    };
   }
 
-  redraw(context, scaleFactor, now) {
+  redraw(context, now) {
     if( !this.render ) return;
 
     // if( this.imageMode !== 'boundary' && !this.imageMode.match(/fulldisk/) ) {
@@ -98,7 +95,7 @@ class MapBlockRenderer extends EventEmitter {
       context.lineWidth = 1;
     }
 
-    let {top, left, bottom, right} = this.getTLBR(scaleFactor);
+    let {top, left, bottom, right} = this.getTLBR();
 
     context.rect(
       left, top, 
@@ -122,14 +119,8 @@ class MapBlockRenderer extends EventEmitter {
     context.stroke();
   }
 
-  // redrawImg(imgContext, scaleFactor) {
-  //   if( !this.block ) return;
-  //   let {top, left, bottom, right} = this.getTLBR(scaleFactor);
-  //   imgContext.drawImage(this.block.img, left, top, (right - left), (bottom - top));
-  // }
-
-  redrawImg(imgContext, scaleFactor) {
-    let {top, left, bottom, right} = this.getTLBR(scaleFactor);
+  redrawImg(imgContext) {
+    let {top, left, bottom, right} = this.getTLBR();
     imgContext.drawImage(this.canvas, left, top, (right - left), (bottom - top));
   }
 
