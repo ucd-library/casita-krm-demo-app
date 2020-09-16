@@ -13,6 +13,9 @@ class AppStateModelImpl extends AppStateModel {
 
 
   set(state) {
+    if( !state.band && !this.store.data.band ) {
+      state.band = 7;
+    }
     // if( state.gridModeEnabled === undefined ) {
     //   state.gridModeEnabled = true;
     // }

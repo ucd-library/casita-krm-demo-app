@@ -7,6 +7,7 @@ class ImageService extends BaseService {
     super();
     this.store = ImageStore;
     this.xmlParser = new DOMParser();
+    this.MAX_FULLDISK_ATTEMPTS = 10;
   }
 
   loadImage(url) {
@@ -16,7 +17,7 @@ class ImageService extends BaseService {
 
     return new Promise((resolve, reject) => {
       img.onload = () => resolve(img);
-      img.onerror = e => reject(err);
+      img.onerror = e => reject(e);
     });
   }
 
@@ -42,12 +43,11 @@ class ImageService extends BaseService {
     let xmlDoc = this.xmlParser.parseFromString(xml,"text/xml");
   
     // TODO: x and y coverage vary.
-    let coverage = 0.302701402/2;
     var {coords, scaleFactor} = this._getCoordsFromMeta(xmlDoc, 'x');
-    let left = coords[0] + (coverage / scaleFactor);
+    let left = coords[0] + ((APP_CONFIG.coverage.fulldisk.x/2) / scaleFactor);
 
     var {coords, scaleFactor} = this._getCoordsFromMeta(xmlDoc, 'y');
-    let top = (coverage / scaleFactor) - coords[0];
+    let top = ((APP_CONFIG.coverage.fulldisk.y/2) / scaleFactor) - coords[0];
 
     return {top, left, scaleFactor};
   }
@@ -67,8 +67,75 @@ class ImageService extends BaseService {
     }
   }
 
-  listImages() {
+  async ls(dir) {
+    let resp = await fetch(
+      APP_CONFIG.dataServer.url + '/' + dir.replace(/^\//, ''),
+      {
+        headers : {accept : 'application/json'}
+      }
+    );
+    return resp.json();
+  }
 
+
+  async getLatestFulldisk(band) {
+    return ;
+
+    let dir = '/west/fulldisk';
+
+    let dates = (await this.ls(dir)).map(v => {return {date: v, time : new Date(v).getTime()}})
+    dates.sort((a, b) => a.time < b.time ? 1 : -1);
+
+    let latestUrl = await this._getHour(dir + '/' + dates[0].date, band);
+    if( latestUrl === false && dates.length > 1) {
+      latestUrl = await this._getHour(dir + '/' + dates[1].date, band);
+    }
+
+    if( latestUrl === false || latestUrl.failure ) {
+      return console.error('failed to load background full disk image for band: '+band);
+    }
+
+    let bgImg = await this.loadImage(APP_CONFIG.dataServer.url +latestUrl.success);
+
+    // the band has updated
+    if( band !== this.store.data.currentBand ) return;
+    this.store.onLatestFulldiskImgLoad(bgImg);
+  }
+
+  async _getHour(dir, band) {
+    let hour = (await this.ls(dir)).map(v => {return {asInt: parseInt(v), hour : v}})
+    hour.sort((a, b) => a.asInt < b.asInt ? 1 : -1);
+
+    // try current hour
+    let currentHourDir = await this._getMinSec(dir + '/' + hour[0].hour, band);
+    if( currentHourDir ) return {success: currentHourDir};
+
+    // try prior hour
+    if( hour.length > 1 ) {
+      let priorHourDir = await this._getMinSec(dir + '/' + hour[1].hour, band);
+      if( priorHourDir ) return {success: priorHourDir};
+      return {failure: true}
+    }
+
+    // the prior hour is a prior day
+    return false;
+  }
+
+  async _getMinSec(dir, band) {
+    let minsec = (await this.ls(dir)).map(v => {return {asInt: parseInt(v.replace('-', '')), minsec : v}})
+    minsec.sort((a, b) => a.asInt < b.asInt ? 1 : -1);
+
+    if( minsec.length <= 1 ) return false;
+
+    dir = dir + '/' + minsec[0].minsec + '/' + band;
+    let apids = await this.ls(dir);
+    dir = dir + '/' + apids[0];
+
+    let files = await this.ls(dir);
+    if( files.includes('web_scaled.png') ) {
+      return dir+'/web_scaled.png';
+    }
+    return false;
   }
 
 }

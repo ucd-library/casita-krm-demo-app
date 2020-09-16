@@ -62,11 +62,11 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
   _onScroll(e) {
     let orgZoom = this.mapView.zoom;
 
-    if( e.deltaY > 0 ) this.mapView.zoom -= 0.2;
-    else this.mapView.zoom += 0.2;
+    if( e.deltaY > 0 ) this.mapView.zoom = this.mapView.zoom - (this.mapView.zoom * 0.2);
+    else this.mapView.zoom = this.mapView.zoom + (this.mapView.zoom * 0.2);
 
-    if( this.mapView.zoom > 7 ) this.mapView.zoom = 7;
-    if( this.mapView.zoom < 0.6 ) this.mapView.zoom = 0.6;
+    if( this.mapView.zoom > 20 ) this.mapView.zoom = 20;
+    if( this.mapView.zoom < 0.25 ) this.mapView.zoom = 0.25;
 
     let centerX = this.canvasWidth/2;
     let centerY = this.canvasHeight/2;
@@ -136,26 +136,24 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
   }
 
   onResize(first=false) {
-    let size = null;
-
     let w = window.innerWidth;
     let h = window.innerHeight;
-    let mobile = (w < 678);
 
+    let mobile = (w < 678);
     if( !mobile ) w -= 350;
 
-    if( w < h ) {
-      size = w
-    } else {
-      size = h;
-    }
-
-    this.canvasHeight = size;
-    this.canvasWidth = size;
+    this.canvasHeight = h;
+    this.canvasWidth = w;
 
     if( first ) {
-      if( w < h ) this.mapView.zoom = 2732 / size;
-      else this.mapView.zoom = 2712 / size;
+      if( w < h ) this.mapView.zoom = (2732 * 4) / w;
+      else this.mapView.zoom = (2712 * 4) / h;
+
+      let mapWidth = (2732 * 4)/  this.mapView.zoom ;
+      this.mapView.offset = {
+        x: (w/2) - (mapWidth/2), 
+        y: 0
+      }
     }
 
     if( w > 768 ) this.infoOpen = false;
@@ -163,7 +161,11 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
 
     this.unhandledResize = true;
 
-    // if( !first ) this.renderImgCanvas();
+    if( this.resizeTimer ) clearTimeout(this.resizeTimer);
+    this.resizeTimer = setTimeout(() => {
+      this.resizeTimer = null;
+      this.redrawImgBlocks();
+    }, 100);
   }
 
   _onAppStateUpdate(e) {
@@ -173,6 +175,11 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
     if( this.selectedBlockGroups === e.selectedBlockGroups ) return;
     this.selectedBlockGroups = e.selectedBlockGroups;
     this.infoOpen = true;
+  }
+
+  _onFilldiskImageUpdate(data) {
+    this.fulldiskImage = data;
+    this.rebalanceImgColor();
   }
 
   setImageryMode(mode, gridModeEnabled=false) {
@@ -329,20 +336,33 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
     // this.renderImgCanvas();
   }
 
-  _onColorRebalanceWorkerComplete(e) {
+  async _onColorRebalanceWorkerComplete(e) {
     this.histogram = e.data.histogram;
 
     this.balancedContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+    console.log('color rebalance complete, setting block data');
 
-    for( let block of e.data.data ) {
+    this._setBalancedData(e.data.data);
+
+    this.redrawImgBlocks();
+    this.redrawRasterMask();
+  }
+
+  async _setBalancedData(data) {
+    for( let block of data ) {
       let blockRender = blockStore.blocks[block.id];
-      blockRender.setBalancedData(block.data);
+      await blockRender.setBalancedData(block.data);
     }
+
     this.redrawImgBlocks();
     this.redrawRasterMask();
   }
 
   redrawImgBlocks() {
+    if( this.fulldiskImage ) {
+      this.balancedContext.drawImage(this.fulldiskImage.image, 0, 0);
+    }
+
     let blocks = Object.values(blockStore.blocks);
     blocks.sort((a, b) => a.lastUpdated < b.lastUpdated ? -1 : 1);
     for( let block of blocks ) {

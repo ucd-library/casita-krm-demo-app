@@ -6,6 +6,7 @@ class SocketStore extends BaseStore {
     super();
 
     this.data = {
+      band : {},
       boundary : {},
       lightening : [],
       strikeCount : 0

@@ -29,14 +29,41 @@ class SocketService extends BaseService {
     this.model = model;
   }
 
+  setBand(band) {
+    let subjectId = `file:///west/{scale}/{date}/{hour}/{minsec}/${band}/{apid}/blocks/{block}/web_scaled.png`
+    if( this.store.data.band.subjectId === subjectId ) return;
+
+    let currentId = this.store.data.band.subjectId;
+    if( currentId && this.connected ) {
+      console.log('Unlistening to: '+this.store.data.band.subjectId);
+      this.io.emit('unlisten', JSON.stringify([currentId]));
+    }
+
+    this.store.data.band = {band, subjectId};
+
+    if( this.connected ) {
+      console.log('Listening to: '+this.store.data.band.subjectId);
+      this.io.emit('listen', JSON.stringify([{
+        subject : subjectId
+      }]));
+    }
+  }
+
   onConnect() {
     console.log('connected to socket');
-    this.io.emit('listen', JSON.stringify([{
-      subject : 'file:///west/{scale}/{date}/{hour}/{minsec}/2/{apid}/blocks/{block}/web_scaled.png'
-    }]));
+    this.connected = true;
+
+    // make sure we reconnect 
+    if( this.store.data.band.subjectId ) {
+      console.log('Listening to: '+this.store.data.band.subjectId);
+      this.io.emit('listen', JSON.stringify([{
+        subject : this.store.data.band.subjectId
+      }]));
+    }
   }
 
   onDisconnect() {
+    this.connected = false;
     console.warn('disconnected to socket');
   }
 
@@ -59,12 +86,6 @@ class SocketService extends BaseService {
 
   async onMessage(msg) {
     EventBus.emit('socket-message', msg);
-
-    // data = Object.assign(data, apidUtils.get(data.apid)); 
-    // new Date('2000-01-01T12:00:00.000Z').getTime()
-    // data.localTime = new Date(APP_CONFIG.epoch + (data.time * 1000));
-
-    // this.store.onImageBoundaryLoad(this.model.getBoundaryId(data), data);
   }
 
   onLightningEvents(data) {

@@ -6,6 +6,7 @@ class MapBlockRenderer extends EventEmitter {
   constructor(map) {
     super(); 
 
+    this.debug = true;
     this.lastUpdated = -1;
     this.map = map;
 
@@ -39,11 +40,35 @@ class MapBlockRenderer extends EventEmitter {
 
     // initialize the 'balanced raster' so we have one
     this.canvasImgData = this.canvasCtx.getImageData(0, 0, block.img.width, block.img.height);
+
+    let sampled = new Uint8ClampedArray(this.canvasImgData.data.length/4);
+    for( let i = 0; i < this.canvasImgData.data.length; i += 4 ) {
+      sampled[i/4] = this.canvasImgData.data[i];
+    }
+    this.canvasImgData = {
+      data:sampled,
+      width : this.canvasImgData.width,
+      height : this.canvasImgData.height
+    };
+
     // this.balancedImgData = this.canvasImgData;
   }
 
+
   setBalancedData(data) {
-    this.canvasCtx.putImageData(new ImageData(data.data, data.width, data.height), 0, 0);
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        let rgba = new Uint8ClampedArray(data.width * data.height * 4);
+        for( let i = 0; i < data.data.length; i++ ) {
+          rgba[i*4] = data.data[i];
+          rgba[(i*4)+1] = data.data[i];
+          rgba[(i*4)+2] = data.data[i];
+          rgba[(i*4)+3] = 255;
+        }
+        this.canvasCtx.putImageData(new ImageData(rgba, data.width, data.height), 0, 0);
+        resolve();
+      },0);
+    });
   }
 
   getTLBR() {
@@ -82,16 +107,19 @@ class MapBlockRenderer extends EventEmitter {
       context.lineWidth = 2;
     } else if( now - this.lastUpdated < 3000 ) {
       context.strokeStyle = 'rgba(255, 165, 0)'
+      context.fillStyle = 'rgba(255, 165, 0)'
       context.lineWidth = 2;
     } else if( this.block.scale ==='conus' ) {
-      return
-      // if( !this.gridModeEnabled ) return;
-      context.strokeStyle = '#638e9e'
+      context.strokeStyle = 'yellow'
+      context.fillStyle = 'yellow'
+      context.lineWidth = 1;
+    } else if( this.block.scale ==='mesoscale' ) {
+      context.strokeStyle = 'red'
+      context.fillStyle = 'red'
       context.lineWidth = 1;
     } else {
-      return
-      // if( !this.gridModeEnabled ) return;
-      context.strokeStyle = '#ccc'
+      context.strokeStyle = 'green'
+      context.fillStyle = 'green'
       context.lineWidth = 1;
     }
 
@@ -103,6 +131,14 @@ class MapBlockRenderer extends EventEmitter {
       (bottom - top)
     );
     context.stroke();
+
+    if( this.debug ) {
+
+      context.font = "10px Arial";
+      context.fillText(this.block.scale, left+5, top+10);
+      // context.fillText(left+', '+top, left+5, top+25);
+      context.fillText(this.block.location.original.tl[0]+', '+this.block.location.original.tl[1], left+5, top+25);
+    }
 
     if( now - this.lastUpdated > 1000 ) return
     let p = (now - this.lastUpdated) / 1000;

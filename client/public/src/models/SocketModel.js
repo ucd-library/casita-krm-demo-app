@@ -11,14 +11,15 @@ class SocketModel extends BaseModel {
     this.service = SocketService;
     this.service.setModel(this);
 
+    this.EventBus.on('app-state-update', e => this._onAppStateUpdate(e));
 
     this.register('SocketModel');
   }
 
-  getBoundaryId(data) {
-    return data.apid+'-'+data.top+'-'+
-            data.left+'-'+data.bottom+'-'+data.right;
+  _onAppStateUpdate(e) {
+    this.service.setBand(e.band);
   }
+
 
 }
 

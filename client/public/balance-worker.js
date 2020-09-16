@@ -19,11 +19,12 @@ onmessage = function(e) {
 
   for( let block of blocks ) {
     let data = block.data;
-    for( let i = 0; i < data.length; i +=4 ) {
-      if( data[i+3] === 0 ) continue;
-      if( data[i] === 0 && data[i+1] === 0 && data[i+2] === 0 ) {
-        continue;
-      }
+    for( let i = 0; i < data.length; i++ ) {
+    // for( let i = 0; i < data.length; i +=4 ) {
+      // if( data[i+3] === 0 ) continue;
+      // if( data[i] === 0 && data[i+1] === 0 && data[i+2] === 0 ) {
+      //   continue;
+      // }
 
       if( histogram[data[i]] !== undefined ) histogram[data[i]] += 1;
       else histogram[data[i]] = 1;
@@ -38,22 +39,17 @@ onmessage = function(e) {
 
   for( let block of blocks ) {
     let data = block.data;
-    for( let i = 0; i < data.length; i +=4 ) {
-      if( data[i] === 0 && data[i+1] === 0 && data[i+2] === 0 ) {
+    for( let i = 0; i < data.length; i++ ) {
+    // for( let i = 0; i < data.length; i +=4 ) {
+      if( data[i] === 0 ) {
         continue;
       }
-      
-      let fit = fitData(data[i], min, max);
-      if( fit === 255 ) {
-        data[i] = fit;
-        data[i+1] = 0;
-        data[i+2] = 0;
-      } else {
-        data[i] = fit;
-        data[i+1] = fit;
-        data[i+2] = fit;
-      }
-      data[i+3] = 255;
+      // if( data[i] === 0 && data[i+1] === 0 && data[i+2] === 0 ) {
+      //   continue;
+      // }
+
+      data[i] = fitData(data[i], min, max);
+      data[i] = fit;
     }
   }
 

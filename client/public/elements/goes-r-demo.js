@@ -20,7 +20,10 @@ export default class GoesRDemo extends Mixin(LitElement)
     this.products = [];
     this.productsLookup = {};
 
-    this._injectModel('SocketModel', 'ImageModel');
+    this._injectModel('AppStateModel', 'SocketModel', 'ImageModel');
+    this.AppStateModel.set({
+      band : 2
+    });
   }
 
   firstUpdated() {
