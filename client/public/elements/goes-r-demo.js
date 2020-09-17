@@ -3,7 +3,12 @@ import render from "./goes-r-demo.tpl.js"
 
 import "@ucd-lib/cork-app-utils"
 import "../src"
-import "./simple-product-canvas"
+
+import "./styles/properties"
+
+import "./left-bar/app-left-bar"
+import "./map/app-canvas-map"
+import "./layout/app-header"
 
 export default class GoesRDemo extends Mixin(LitElement)
   .with(LitCorkUtils) {
@@ -27,7 +32,7 @@ export default class GoesRDemo extends Mixin(LitElement)
   }
 
   firstUpdated() {
-    this.canvas = this.shadowRoot.querySelector('simple-product-canvas');
+    this.canvas = this.shadowRoot.querySelector('app-canvas-map');
   }
 
   _onBlockUpdate(e) {

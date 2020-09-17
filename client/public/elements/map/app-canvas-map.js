@@ -1,14 +1,13 @@
 import { LitElement } from 'lit-element';
-import render from "./simple-product-canvas.tpl.js"
+import render from "./app-canvas-map.tpl.js"
 
 import "@polymer/iron-icons"
-import "./info-bar/app-info-bar"
 import blockStore from "./render/block-store"
 import strikeStore from "./render/strike-store"
-import worker from "./balance-worker"
-import "./app-histogram-slider"
+import worker from "../balance-worker"
+import "../app-histogram-slider"
 
-export default class SimpleProductCanvas extends Mixin(LitElement)
+export default class AppCanvasMap extends Mixin(LitElement)
   .with(LitCorkUtils) {
 
   static get properties() {
@@ -27,19 +26,27 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
     super();
     this.render = render.bind(this);
 
+    this._injectModel('AppStateModel', 'SocketModel', 'ImageModel');
+
     this.filters = [];
     this.filtered = {};
     this.lightning = [];
     this.infoOpen = true;
-    this.imageModeEnabled = true;
-    this.gridModeEnabled = true;
+
     this.histogram = {};
+    this.fit = {};
 
     this.mapView = {
       panning : false,
       offset : {x: 0, y : 0},
       zoom : 1
     }
+
+    let {min, max} = this.ImageModel.getHistogram();
+    this.absMin = min;
+    this.absMax = max;
+
+    this.imageModeEnabled = true;
 
     // this.imageMode = 'boundary';
     // this.imageProductDef = APP_CONFIG.imageProduct[this.imageMode];
@@ -49,7 +56,7 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
     this.rebalanceImgColorTimer = -1;
     this.unhandledResize = false;
 
-    this._injectModel('AppStateModel', 'SocketModel');
+    
 
     worker.onmessage = e => this._onColorRebalanceWorkerComplete(e);
 
@@ -119,28 +126,26 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
 
   firstUpdated() {
     this.onResize(true);
+
     this.mapEle = this.shadowRoot.querySelector('#map');
     this.context = this.shadowRoot.querySelector('#vectorCanvas').getContext('2d');
-    this.imgContext = this.shadowRoot.querySelector('#rasterCanvas').getContext('2d');
     this.balancedContext = this.shadowRoot.querySelector('#balancedCanvas').getContext('2d');
 
-    this.shadowRoot.querySelector('#filters').style.display = "block";
+    // this.shadowRoot.querySelector('#filters').style.display = "block";
 
-    let histoEle = this.shadowRoot.querySelector('app-histogram-slider');
-    this.absMin = histoEle.min;
-    this.absMax = histoEle.max;
+    // let histoEle = this.shadowRoot.querySelector('app-histogram-slider');
+    // this.absMin = histoEle.min;
+    // this.absMax = histoEle.max;
 
     this.AppStateModel.set({mode: this.imageMode});
 
+    // debugger;
     requestAnimationFrame(() => this.redraw());
   }
 
   onResize(first=false) {
     let w = window.innerWidth;
     let h = window.innerHeight;
-
-    let mobile = (w < 678);
-    if( !mobile ) w -= 350;
 
     this.canvasHeight = h;
     this.canvasWidth = w;
@@ -169,12 +174,17 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
   }
 
   _onAppStateUpdate(e) {
-    this.setImageryMode(e.mode);
+    this.appState = e;
+    for( let id in blockStore.blocks ) {
+      blockStore.blocks[id].updateSettings(e)
+    }
 
-    if( !e.selectedBlockGroups ) return;
-    if( this.selectedBlockGroups === e.selectedBlockGroups ) return;
-    this.selectedBlockGroups = e.selectedBlockGroups;
-    this.infoOpen = true;
+    // this.setImageryMode(e.mode);
+
+    // if( !e.selectedBlockGroups ) return;
+    // if( this.selectedBlockGroups === e.selectedBlockGroups ) return;
+    // this.selectedBlockGroups = e.selectedBlockGroups;
+    // this.infoOpen = true;
   }
 
   _onFilldiskImageUpdate(data) {
@@ -318,7 +328,7 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
       block = blockStore.blocks[id];
       data.push({
         id,
-        data: block.canvasImgData
+        data: block.sampledImgData
       });
     }
 
@@ -338,31 +348,30 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
 
   async _onColorRebalanceWorkerComplete(e) {
     this.histogram = e.data.histogram;
+    this.fit.min = e.data.min;
+    this.fit.max = e.data.max;
 
-    this.balancedContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-    console.log('color rebalance complete, setting block data');
+    // this.balancedContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+    this._setBalancedData(e.data);
 
-    this._setBalancedData(e.data.data);
-
-    this.redrawImgBlocks();
     this.redrawRasterMask();
   }
 
-  async _setBalancedData(data) {
-    for( let block of data ) {
-      let blockRender = blockStore.blocks[block.id];
-      await blockRender.setBalancedData(block.data);
+  async _setBalancedData(e) {
+    let blocks = Object.values(blockStore.blocks);
+    blocks.sort((a, b) => a.lastUpdated < b.lastUpdated ? -1 : 1);
+    
+    let c = 0;
+    for( let block of blocks ) {
+      let resp = await block.setBalancedData(e.min, e.max, this.balancedContext);
+      if( resp !== false) c++;
     }
+    console.log('Block count requiring update after balance: '+c, ((c/blocks.length)*100)+'%', e.min, e.max);
 
-    this.redrawImgBlocks();
     this.redrawRasterMask();
   }
 
   redrawImgBlocks() {
-    if( this.fulldiskImage ) {
-      this.balancedContext.drawImage(this.fulldiskImage.image, 0, 0);
-    }
-
     let blocks = Object.values(blockStore.blocks);
     blocks.sort((a, b) => a.lastUpdated < b.lastUpdated ? -1 : 1);
     for( let block of blocks ) {
@@ -398,16 +407,6 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
     }
   }
 
-  fit(val, min, max) {
-    if( val < min ) val = min;
-    else if ( val > max ) val = max;
-
-    val = val - min;
-
-    return Math.round( ( val / (max-min)) * 255);
-  }
-
-
   _onCanvasClicked(e) {
     let elePos = e.currentTarget.getBoundingClientRect();
     let x = Math.round((e.x - elePos.x) * this.mapView.zoom);
@@ -424,4 +423,4 @@ export default class SimpleProductCanvas extends Mixin(LitElement)
 
 }
 
-customElements.define('simple-product-canvas', SimpleProductCanvas);
+customElements.define('app-canvas-map', AppCanvasMap);

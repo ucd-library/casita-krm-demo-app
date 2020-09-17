@@ -6,14 +6,40 @@ class ImageStore extends BaseStore {
     super();
 
     this.data = {
+      latestCaptureTime : {},
       currentBand : -1,
       blocks : {},
-      fulldiskImg : null
+      fulldiskImg : null,
+      histogram : {
+        data : {},
+        min : 5,
+        max : 190
+      }
     };
     this.events = {
       BLOCK_UPDATE : 'block-update',
-      FULLDISK_IMAGE_UPDATE : 'filldisk-image-update'
+      FULLDISK_IMAGE_UPDATE : 'filldisk-image-update',
+      LATEST_CAPTURE_TIME_UPDATE : 'latest-image-capture-time-update',
+      HISTOGRAM_UPDATE : 'image-histogram-update'
     };
+  }
+
+  setHistogramMinMax(min, max) {
+    this.data.histogram.min = min;
+    this.data.histogram.max = max;
+  }
+
+  setHistogramData(data) {
+    this.data.histogram.data = data;
+  }
+
+  setLatestCaptureTime(date, ttd) {
+    if( this.data.latestCaptureTime.date  && 
+      date.getTime() < this.data.latestCaptureTime.date.getTime() ) {
+      return;
+    }
+    this.data.latestCaptureTime = {date, ttd};
+    this.emit(this.events.LATEST_CAPTURE_TIME_UPDATE, this.data.latestCaptureTime);
   }
 
   onBlockLoad(block) {

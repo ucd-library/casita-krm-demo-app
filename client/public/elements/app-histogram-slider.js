@@ -29,7 +29,7 @@ export default class AppHistogramSlider extends LitElement {
   }
 
   updated(props) {
-    if( props.has('data') ) {
+    if( props.has('data') && this.data ) {
       this.redraw();
       if( this.selectedValue !== undefined ) {
         this.selectedValueLabel = this.selectedValue+'='+(this.data[this.selectedValue] || 0);

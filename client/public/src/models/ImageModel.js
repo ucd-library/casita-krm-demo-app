@@ -49,6 +49,15 @@ class ImageModel extends BaseModel {
       return;
     }
 
+    let [year, month, day] = date.split('-').map(v => parseInt(v));
+    let [min, sec] = minsec.split('-').map(v => parseInt(v));
+    let datetime = new Date(year, month-1, day, parseInt(hour), min, sec, 0);
+
+    
+    datetime = new Date(datetime.getTime() - (new Date().getTimezoneOffset()*60*1000))
+
+    this.store.setLatestCaptureTime(datetime, Date.now() - datetime.getTime());
+
     let resolution = APP_CONFIG.bandCharacteristics[parseInt(band)].resolution;
     // APP_CONFIG.imageScaleFactor is a factor set on the server, how much it scales the web_scaled images.
     let initImageScale = (APP_CONFIG.imageScaleFactor * resolution);
@@ -101,15 +110,20 @@ class ImageModel extends BaseModel {
     }
 
     if( scale === 'mesoscale' ) {
-      let {top, left} = await this.service.getMesoscaleCoord({
+      let {error, top, left} = await this.service.getMesoscaleCoord({
         satellite, scale, date, hour, minsec, band, apid
       });
+      if( error ) return;
 
       block.location.original.offset = [left, top];
       block.location.scaled.offset = [left * initImageScale, (top * initImageScale) + FULLDISK_FUDGE_FACTOR];
     }
 
     this.store.onBlockLoad(block);
+  }
+
+  getHistogram() {
+    return this.store.data.histogram;
   }
 
 }

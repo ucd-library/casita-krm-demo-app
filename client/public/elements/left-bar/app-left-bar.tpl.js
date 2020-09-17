@@ -1,18 +1,24 @@
 import { html } from 'lit-element';
+import sharedStyles from '../styles/shared'
 
 export default function render() { 
 return html`
 
+${sharedStyles}
 <style>
   :host {
     display: block;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
+
+    background: rgb(0, 0, 0);
+    background: linear-gradient(
+      90deg, 
+      rgba(0,0,0,1) 0%, 
+      rgba(0,0,0,0.3) 89%,
+      rgba(0,0,0,0) 100%
+    ) 
   }
 
-  h2 {
-    padding-left: 10px;
-  }
 
   h2 button {
     cursor: pointer;
@@ -71,21 +77,20 @@ return html`
 </style>  
 
 <div class="overflow">
-  <h2>GOES-R Preview <button @click="${this._onCloseClicked}"><iron-icon icon="close"></iron-icon></button></h2>
-
   <div class="section">
-    <h3>Latest Image Capture</h3>
-    <div>Capture Time: ${this.imageCaptureTimeStr}</div>
-    <div>Time to Device: ${this.imageCaptureToDevice}s</div>
+    <h2>Latest Capture</h2>
+    <div>${this.imageCaptureTimeStr}</div>
+    <div>Time to Device: ${this.imageCaptureToDevice}</div>
   </div>
 
   <div class="section">
-    <h3>Lightning</h3>
-    <div>Average: ${this.avgLightningStrikes} strikes/sec</div>
+    <h2>Natural Phenomena</h2>
+    <div>Lightning | Avg. ${this.avgLightningStrikes} strikes/sec</div>
   </div>
 
   <div class="section">
-    <h3>Map View</h3>
+    <h2>Map Options</h2>
+
     <app-imagery-selector></app-imagery-selector>
     <!-- <h3>Imagery Mode</h3>
     <div>
@@ -97,14 +102,24 @@ return html`
      -->
 
     <div ?hidden="${!this.imageModeEnabled}">
-      <slot name="histogram"></slot>
+      <app-histogram-slider 
+        id="histogram"
+        .data=${this.histogram}
+        @bounds-change="${this._onHistogramBoundsChange}">
+      </app-histogram-slider>
     </div>
   </div>
 
   <div class="section">
     <h3>Display grid</h3>
-    <div><input id="grid" type="checkbox" .checked="${this.gridModeEnabled}" @click="${this._onGridModeClicked}" /> 
-    <label for="grid">Leave grid on map display after events.</label></div>
+    <div>
+      <input id="grid" type="checkbox" .checked="${this.gridModeEnabled}" @click="${this._onGridModeClicked}" /> 
+      <label for="grid">Leave grid on map display after events.</label>
+    </div>
+    <div ?hidden="${!this.gridModeEnabled}">
+      <input id="label" type="checkbox" .checked="${this.labelModeEnabled}" @click="${this._onLabelModeClicked}" /> 
+      <label for="label">Display product labels</label>
+    </div>
   </div>
 
   <div class="section" ?hidden="${!this.selectedBlockGroups.length}">

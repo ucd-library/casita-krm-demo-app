@@ -1,20 +1,23 @@
 import { LitElement } from 'lit-element';
-import render from "./app-info-bar.tpl.js"
+import render from "./app-left-bar.tpl.js"
 
 import "./app-imagery-selector"
 
-export default class AppInfoBar extends Mixin(LitElement)
+export default class AppLeftBar extends Mixin(LitElement)
   .with(LitCorkUtils) {
 
   static get properties() {
     return {
       avgLightningStrikes : {type: Number},
+      showLightning : {type: Boolean},
       imageCaptureTime : {type: Date},
       imageCaptureTimeStr : {type: String},
       imageCaptureToDevice : {type: String},
       selectedBlockGroups : {type: Array},
       gridModeEnabled : {type: Boolean},
-      imageModeEnabled : {type: Boolean}
+      labelModeEnabled : {type: Boolean},
+      imageModeEnabled : {type: Boolean},
+      band : {type: Number}
     }
   }
 
@@ -23,22 +26,34 @@ export default class AppInfoBar extends Mixin(LitElement)
     this.render = render.bind(this);
 
     this.totalLightningStrikes = 0;
-    this.imageCaptureTimeStr = '';
-    this.imageCaptureToDevice = '';
+    this.imageCaptureTimeStr = 'NA';
+    this.imageCaptureToDevice = 'NA';
+    this.avgLightningStrikes = 0;
+
+    this.showLightning = false;
 
     this.selectedBlockGroups = [];
 
     this.imageModeEnabled = false;
     this.gridModeEnabled = false;
 
-    this._injectModel('SocketModel', 'AppStateModel');
+    this._injectModel('SocketModel', 'AppStateModel', 'ImageModel');
   }
 
   _onAppStateUpdate(e) {
     this.appState = e;
+    
     this.gridModeEnabled = e.gridModeEnabled ? true : false;
+    this.labelModeEnabled = e.labelModeEnabled ? true : false;
+
     this.imageModeEnabled = (e.mode !== 'boundary');
     this._renderSelectedBlockGroups();
+  }
+
+  _onLatestImageCaptureTimeUpdate(e) {
+    this.imageCaptureTimeStr = e.date.getFullYear()+'-'+(e.date.getMonth()+1)+'-'+e.date.getDate() + ', ' + 
+      e.date.getHours()+':'+e.date.getMinutes()+':'+e.date.getSeconds();
+    this.imageCaptureToDevice = Math.floor(e.ttd/1000);
   }
 
   _renderSelectedBlockGroups() {
@@ -83,6 +98,11 @@ export default class AppInfoBar extends Mixin(LitElement)
     this.AppStateModel.set({gridModeEnabled: enabled});
   }
 
+  _onLabelModeClicked(e) {
+    let enabled = e.currentTarget.checked;
+    this.AppStateModel.set({labelModeEnabled: enabled});
+  }
+
   _onImageBoundaryUpdate(e) {
     if( !this.imageCaptureTime ) {
       this.imageCaptureTime = e.payload.localTime;
@@ -113,4 +133,4 @@ export default class AppInfoBar extends Mixin(LitElement)
 
 }
 
-customElements.define('app-info-bar', AppInfoBar);
+customElements.define('app-left-bar', AppLeftBar);

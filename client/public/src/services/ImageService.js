@@ -43,13 +43,18 @@ class ImageService extends BaseService {
     let xmlDoc = this.xmlParser.parseFromString(xml,"text/xml");
   
     // TODO: x and y coverage vary.
-    var {coords, scaleFactor} = this._getCoordsFromMeta(xmlDoc, 'x');
-    let left = coords[0] + ((APP_CONFIG.coverage.fulldisk.x/2) / scaleFactor);
+    try {
+      var {coords, scaleFactor} = this._getCoordsFromMeta(xmlDoc, 'x');
+      let left = coords[0] + ((APP_CONFIG.coverage.fulldisk.x/2) / scaleFactor);
 
-    var {coords, scaleFactor} = this._getCoordsFromMeta(xmlDoc, 'y');
-    let top = ((APP_CONFIG.coverage.fulldisk.y/2) / scaleFactor) - coords[0];
+      var {coords, scaleFactor} = this._getCoordsFromMeta(xmlDoc, 'y');
+      let top = ((APP_CONFIG.coverage.fulldisk.y/2) / scaleFactor) - coords[0];
 
-    return {top, left, scaleFactor};
+      return {top, left, scaleFactor};
+    } catch(e) {
+      console.error('Failed to get coverage', e);
+    }
+    return {error: true}
   }
 
   _getCoordsFromMeta(xmlDoc, varname) {
