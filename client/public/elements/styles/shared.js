@@ -43,5 +43,14 @@ export default html`
     font-weight: var(--font-weight);
     color: var(--tcolor-text);
   }
+
+  button.nav {
+    height: 35px;
+    border-radius: 35px;
+    border: none;
+    color: white;
+    box-shadow: 0px 0px 6px 0px rgba(0,0,0,0.8);
+    background-color: var(--color-gray20);
+  }
 </style>
 `;

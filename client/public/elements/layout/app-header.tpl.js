@@ -16,14 +16,38 @@ ${sharedStyles}
   }
   div {
     height: 50px;
+    display: flex;
+    align-items: center;
   }
   h1 {
-    padding: 11px 0 0 11px;
+    margin-left: 15px;
+    flex: 1;
   }
+  img {
+    margin-right: 15px
+  }
+  img[sm] {
+    display: none;
+    height: 34px;
+  }
+
+  @media(max-width: 450px) {
+    img[sm] {
+      display: block;
+    }
+    img[full] {
+      display: none;
+    }
+  }
+
 </style>  
 
-<div>
+<div style="flex:1">
   <h1>GOES-R Real Time Data</h1>
+  <a href="https://library.ucdavis.edu" target="_blank">
+    <img src="/images/ucd-lib-logo-full.png" full />
+    <img src="/images/ucd-lib-logo-sm.svg" sm />
+  </a>
 </div>
 
 `;}

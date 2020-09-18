@@ -26,6 +26,7 @@ return html`
 <div class="map-layout" 
   id="map" 
   @mousedown="${this._onMouseDown}"
+  @touchstart="${this._onTouchStart}"
   @wheel="${this._onScroll}"
   style="height: ${this.canvasHeight}px; width:${this.canvasWidth}px">
   <canvas 
@@ -36,11 +37,16 @@ return html`
     style="height: ${this.canvasHeight}px; width:${this.canvasWidth}px">
   </canvas>
   <canvas 
+    id="rasterMaskCanvas" 
+    height="${this.canvasHeight}" 
+    width="${this.canvasWidth}" 
+    style="height: ${this.canvasHeight}px; width:${this.canvasWidth}px">
+  </canvas>
+  <canvas 
     id="vectorCanvas" 
     height="${this.canvasHeight}" 
     width="${this.canvasWidth}" 
-    style="height: ${this.canvasHeight}px; width:${this.canvasWidth}px" 
-    @click="${this._onCanvasClicked}">
+    style="height: ${this.canvasHeight}px; width:${this.canvasWidth}px">
   </canvas>
 </div>
 <div id="rasterCanvasBlocks"></div>

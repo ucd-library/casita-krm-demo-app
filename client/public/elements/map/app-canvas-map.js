@@ -47,6 +47,9 @@ export default class AppCanvasMap extends Mixin(LitElement)
 
     this.imageMode = 'imagery';
 
+    this.fulldiskWidth = (2732 * 4);
+    this.fulldiskHeight = (2712 * 4);
+
     // this.imageMode = 'boundary';
     // this.imageProductDef = APP_CONFIG.imageProduct[this.imageMode];
 
@@ -55,22 +58,29 @@ export default class AppCanvasMap extends Mixin(LitElement)
     this.rebalanceImgColorTimer = -1;
     this.unhandledResize = false;
 
-    
+    this.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--tcolor-bg')
 
     worker.onmessage = e => this._onColorRebalanceWorkerComplete(e);
 
     window.addEventListener('mousemove', e => this._onMouseMove(e));
+    window.addEventListener('touchmove', e => this._onTouchMove(e));
     window.addEventListener('mouseup', e => this._onMouseUp(e));
     window.addEventListener('mouseout', e => this._onMouseOut(e));
+    window.addEventListener('touchend', e => this._onMouseUp(e));
     window.addEventListener('resize', () => this.onResize());
   }
 
   _onScroll(e) {
+    if( e.deltaY > 0 ) {
+      this._updateZoom(this.mapView.zoom - (this.mapView.zoom * 0.2))
+    } else {
+      this._updateZoom(this.mapView.zoom + (this.mapView.zoom * 0.2));
+    }
+  }
+
+  _updateZoom(amount) {
     let orgZoom = this.mapView.zoom;
-
-    if( e.deltaY > 0 ) this.mapView.zoom = this.mapView.zoom - (this.mapView.zoom * 0.2);
-    else this.mapView.zoom = this.mapView.zoom + (this.mapView.zoom * 0.2);
-
+    this.mapView.zoom = amount;
     if( this.mapView.zoom > 20 ) this.mapView.zoom = 20;
     if( this.mapView.zoom < 0.25 ) this.mapView.zoom = 0.25;
 
@@ -102,9 +112,40 @@ export default class AppCanvasMap extends Mixin(LitElement)
     ];
   }
 
+  _onTouchStart(e) {
+    if( this.mapView.zooming ) return;
+
+    console.log(e.touches.length);
+    if( e.touches.length === 1 ) {
+      this.mapView.panning = true;
+      this.mapView.panStartOffset = [
+        this.mapView.offset.x,
+        this.mapView.offset.y
+      ]
+      this.mapView.panStart = [
+        e.touches[0].clientX, e.touches[0].clientY
+      ];
+    } else if( e.touches.length === 2 ) {
+      // the one touch will always fire
+      // clear the pan if we are going to start zooming
+      this.mapView.panning = false;
+      this.mapView.panStartOffset = null;
+      this.mapView.panStart = null;
+
+      this.mapView.zooming = true;
+
+      let diff = Math.sqrt(
+        Math.pow(e.touches[0].clientX - e.touches[1].clientX, 2) +
+        Math.pow(e.touches[0].clientY - e.touches[1].clientY, 2)
+      )
+      this.mapView.touchZoomStartDiff = diff;
+    }
+  }
+
   _onMouseUp(e) {
-    if( !this.mapView.panning ) return;
+    if( !this.mapView.panning && !this.mapView.zooming ) return;
     this.mapView.panning = false;
+    this.mapView.zooming = false;
   }
 
   _onMouseMove(e) {
@@ -118,9 +159,33 @@ export default class AppCanvasMap extends Mixin(LitElement)
     }
   }
 
+  _onTouchMove(e) {
+    if( !this.mapView.panning && !this.mapView.zooming ) return;
+
+    if( this.mapView.panning ) {
+      let diffX = e.touches[0].clientX - this.mapView.panStart[0];
+      let diffY = e.touches[0].clientY - this.mapView.panStart[1];
+
+      this.mapView.offset = {
+        x : this.mapView.panStartOffset[0] + diffX ,
+        y : this.mapView.panStartOffset[1] + diffY
+      }
+    } else if( this.mapView.zooming && e.touches.length > 1 ) {
+      let diff = Math.sqrt(
+        Math.pow(e.touches[0].clientX - e.touches[1].clientX, 2) +
+        Math.pow(e.touches[0].clientY - e.touches[1].clientY, 2)
+      )
+
+      let amount = (this.mapView.touchZoomStartDiff - diff) / 75;
+      this._updateZoom(this.mapView.zoom + (this.mapView.zoom * amount))
+      this.mapView.touchZoomStartDiff = diff;
+    }
+  }
+
   _onMouseOut()  {
-    if( !this.mapView.panning ) return;
+    if( !this.mapView.panning && !this.mapView.zooming ) return;
     this.mapView.panning = false;
+    this.mapView.zooming = false;
   }
 
   firstUpdated() {
@@ -129,6 +194,7 @@ export default class AppCanvasMap extends Mixin(LitElement)
     this.mapEle = this.shadowRoot.querySelector('#map');
     this.context = this.shadowRoot.querySelector('#vectorCanvas').getContext('2d');
     this.balancedContext = this.shadowRoot.querySelector('#balancedCanvas').getContext('2d');
+    this.rasterMaskContext = this.shadowRoot.querySelector('#rasterMaskCanvas').getContext('2d');
 
     // this.shadowRoot.querySelector('#filters').style.display = "block";
 
@@ -143,19 +209,20 @@ export default class AppCanvasMap extends Mixin(LitElement)
 
   onResize(first=false) {
     let w = window.innerWidth;
-    let h = window.innerHeight-60;
+    let h = window.innerHeight-50;
 
     this.canvasHeight = h;
     this.canvasWidth = w;
 
     if( first ) {
-      if( w < h ) this.mapView.zoom = (2732 * 4) / w;
-      else this.mapView.zoom = (2712 * 4) / h;
+      if( w < h ) this.mapView.zoom = this.fulldiskWidth / w;
+      else this.mapView.zoom = this.fulldiskHeight / h;
 
-      let mapWidth = (2732 * 4)/  this.mapView.zoom ;
+      let mapWidth = this.fulldiskWidth /  this.mapView.zoom ;
+      let mapHeight = this.fulldiskHeight /  this.mapView.zoom ;
       this.mapView.offset = {
         x: (w/2) - (mapWidth/2), 
-        y: 0
+        y: (h/2) - (mapHeight/2), 
       }
       this.mapView.zoomChange = true;
     }
@@ -194,11 +261,20 @@ export default class AppCanvasMap extends Mixin(LitElement)
 
     if( this.view !== e.view ) {
       if( e.view === 'ca' ) {
-        this.mapView.offset = {
-          x: -2902 + (this.canvasWidth / 4), 
-          y: -445
-        }
         this.mapView.zoom = 2;
+
+        
+        let centerX = 3164 - (this.canvasWidth/3);
+        let centerY = 200 - (this.canvasHeight/3);
+
+        let newOffsetX = centerX*-1;
+        let newOffsetY = centerY*-1;
+
+        this.mapView.offset = {
+          x : newOffsetX,
+          y : newOffsetY,
+        }
+
         this.mapView.zoomChange = true;
         this.onResize();
       } else if( e.view === 'world') {
@@ -262,9 +338,9 @@ export default class AppCanvasMap extends Mixin(LitElement)
 
     this.mapView.zoomChange = false;
 
-    requestAnimationFrame(() => {
+    // requestAnimationFrame(() => {
       requestAnimationFrame(() => this.redraw());
-    });
+    // });
   }
 
   rebalanceImgColor() {
@@ -340,29 +416,40 @@ export default class AppCanvasMap extends Mixin(LitElement)
 
   
   redrawRasterMask() {
-    return;
-    try {
-      this.balancedContext.beginPath();
 
-      this.balancedContext.rect(
+    try {
+      this.rasterMaskContext.beginPath();
+
+      this.rasterMaskContext.clearRect(
+        0, 0,
+        this.canvasWidth,
+        this.canvasHeight
+      );
+      this.rasterMaskContext.rect(
         0, 0,
         this.canvasWidth,
         this.canvasHeight
       );
 
-      this.balancedContext.arc(
-        ((this.canvasWidth * this.mapView.zoom)/2) + this.mapView.offset.x,
-        ((this.canvasHeight * this.mapView.zoom)/2) + this.mapView.offset.y, 
-        Math.floor((this.canvasWidth-4)/2) * this.mapView.zoom, // radius
+      let centerx = this.fulldiskWidth/2;
+      let centery = this.fulldiskHeight/2;
+
+      let screenX = Math.floor((centerx/this.mapView.zoom) + this.mapView.offset.x)-5;
+      let screenY = Math.floor((centery/this.mapView.zoom) + this.mapView.offset.y);
+
+      this.rasterMaskContext.arc(
+        screenX,
+        screenY, 
+        (centerx/this.mapView.zoom), // radius
         0, 
         2 * Math.PI
       );
 
-      this.balancedContext.closePath();
-      this.balancedContext.fillStyle = 'blue';
-      this.balancedContext.fill('evenodd');
+      this.rasterMaskContext.closePath();
+      this.rasterMaskContext.fillStyle = this.backgroundColor;
+      this.rasterMaskContext.fill('evenodd');
     } catch(e) {
-
+      console.error('error making raster mask', e)
     }
   }
 

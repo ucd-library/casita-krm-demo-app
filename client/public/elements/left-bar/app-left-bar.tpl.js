@@ -48,6 +48,8 @@ ${sharedStyles}
 </style>  
 
 <div class="padding">
+  <slot name="nav-btn"></slot>
+
   <div class="section">
     <h2>Latest Capture</h2>
     <div>${this.imageCaptureTimeStr}</div>
@@ -59,7 +61,7 @@ ${sharedStyles}
     <div>Lightning | Avg: ${this.avgLightningStrikes}</div>
   </div>
 
-  <div class="section">
+  <div class="section" style="border-bottom: none">
     <h2>Map Options</h2>
 
     <h3>Map View</h3>

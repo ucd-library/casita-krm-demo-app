@@ -24,6 +24,7 @@ html {
   --color-rose : #FF8189;
   --color-putah-creek : #008EAA;
   --color-double-decker : #C10230;
+  --color-green : #7ab384;
 
   /* Theme colors called throughout application.  */
   --tcolor-primary : var(--color-aggie-gold);

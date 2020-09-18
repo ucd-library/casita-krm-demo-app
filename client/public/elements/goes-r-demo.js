@@ -15,7 +15,8 @@ export default class GoesRDemo extends Mixin(LitElement)
 
   static get properties() {
     return {
-      products : {type: Array}
+      products : {type: Array},
+      showNav : {type: Boolean}
     }
   }
 
@@ -24,6 +25,8 @@ export default class GoesRDemo extends Mixin(LitElement)
     this.render = render.bind(this);
     this.products = [];
     this.productsLookup = {};
+
+    this.showNav = false;
 
     this._injectModel('AppStateModel', 'SocketModel', 'ImageModel');
     this.AppStateModel.set({
@@ -43,6 +46,10 @@ export default class GoesRDemo extends Mixin(LitElement)
   _onLightningEventsUpdate(e) {
     if( !this.canvas ) return;
     this.canvas.setLightning(e);
+  }
+
+  _onNavClicked(e) {
+    this.showNav = e.currentTarget.hasAttribute('open') ? true : false;
   }
 
 }

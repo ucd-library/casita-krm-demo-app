@@ -20,6 +20,14 @@ class MapBlockRenderer extends EventEmitter {
 
     this.render = false;
     this.fit = {};
+
+    let styles = getComputedStyle(document.documentElement);
+    this.colors = {
+      fulldisk : styles.getPropertyValue('--color-gray70'),
+      conus : styles.getPropertyValue('--color-blue60'),
+      mesoscale : styles.getPropertyValue('--color-green'),
+      incoming : styles.getPropertyValue('--color-poppy'),
+    }
   }
 
   updateSettings(opts) {
@@ -140,23 +148,16 @@ class MapBlockRenderer extends EventEmitter {
     context.beginPath();
 
     if( this.selected ) {
-      context.strokeStyle = 'red';
+      context.strokeStyle = this.colors.incoming;
+      context.fillStyle = this.colors.incoming;
       context.lineWidth = 2;
     } else if( now - this.lastUpdated < 3000 ) {
-      context.strokeStyle = 'rgba(255, 165, 0)'
-      context.fillStyle = 'rgba(255, 165, 0)'
+      context.strokeStyle = this.colors.incoming;
+      context.fillStyle = this.colors.incoming;
       context.lineWidth = 2;
-    } else if( this.block.scale ==='conus' ) {
-      context.strokeStyle = 'yellow'
-      context.fillStyle = 'yellow'
-      context.lineWidth = 1;
-    } else if( this.block.scale ==='mesoscale' ) {
-      context.strokeStyle = 'red'
-      context.fillStyle = 'red'
-      context.lineWidth = 1;
     } else {
-      context.strokeStyle = 'green'
-      context.fillStyle = 'green'
+      context.strokeStyle = this.colors[this.block.scale];
+      context.fillStyle = this.colors[this.block.scale];
       context.lineWidth = 1;
     }
 
@@ -171,9 +172,13 @@ class MapBlockRenderer extends EventEmitter {
       context.stroke();
 
       if( this.labelModeEnabled ) {
-        context.font = "10px Arial";
-        context.fillText(this.block.scale+': '+this.block.apid, left+5, top+10);
-        context.fillText(this.block.location.original.tl[0]+', '+this.block.location.original.tl[1], left+5, top+25);
+        let size = Math.floor(75 * 1/this.map.mapView.zoom);
+        if( size < 8 ) size = 8;
+        if( size > 28 ) size = 28;
+
+        context.font = size+"px Arial";
+        context.fillText(this.block.scale+': '+this.block.apid, left+5, top+size);
+        context.fillText(this.block.location.original.tl[0]+', '+this.block.location.original.tl[1], left+5, top+(size*2));
       }
     }
 
@@ -182,7 +187,7 @@ class MapBlockRenderer extends EventEmitter {
     if( p > 1 ) p = 1;
 
     context.beginPath();
-    context.strokeStyle = `rgba(255, 165, 0, ${p < 0.4 ? 0.4 : p})`;
+    context.strokeStyle = `rgba(241, 138, 0, ${p < 0.4 ? 0.4 : p})`;
     context.lineWidth = 3;
     context.rect(
       left - ((1-p) * 20), 
