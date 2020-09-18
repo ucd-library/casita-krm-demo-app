@@ -18,6 +18,7 @@ export default html`
     font-weight: var(--font-weight-extra-bold);
     text-transform: uppercase;
     color: var(--tcolor-primary);
+    line-height: 18px;
   }
 
   h3 {

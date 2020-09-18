@@ -30,7 +30,7 @@ return html`
   style="height: ${this.canvasHeight}px; width:${this.canvasWidth}px">
   <canvas 
     id="balancedCanvas" 
-    ?hidden="${!this.imageModeEnabled}" 
+    ?hidden="${this.imageMode !== "imagery"}" 
     height="${this.canvasHeight}" 
     width="${this.canvasWidth}" 
     style="height: ${this.canvasHeight}px; width:${this.canvasWidth}px">

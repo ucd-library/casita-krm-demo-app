@@ -1,6 +1,7 @@
 const {BaseModel} = require('@ucd-lib/cork-app-utils');
 const ImageService = require('../services/ImageService');
 const ImageStore = require('../stores/ImageStore');
+const AppStateModel = require('./AppStateModel');
 const proj4 = require('proj4').default;
 
 
@@ -23,6 +24,8 @@ class ImageModel extends BaseModel {
   }
 
   async _onAppStateUpdate(e) {
+    this.imageMode = e.imageMode || 'imagery';
+
     if( this.store.data.currentBand === e.band ) return;
     this.store.data.currentBand = e.band;
 
@@ -36,35 +39,34 @@ class ImageModel extends BaseModel {
   async onSocketMessage(msg) {
     if( !msg.subject.match(/\.png$/) ) return;
 
-    let url = new URL(msg.subject);
-    let [satellite, scale, date, hour, minsec, band, apid, blockDir, block] = url.pathname.replace(/^\//, '').split('/');
+    let parseUrl = new URL(msg.subject);
+    let [satellite, scale, date, hour, minsec, band, apid, blockDir, block] = parseUrl.pathname.replace(/^\//, '').split('/');
 
-    url = APP_CONFIG.dataServer.url + url.pathname;
+    let url = APP_CONFIG.dataServer.url + parseUrl.pathname;
+    let resolution = APP_CONFIG.bandCharacteristics[parseInt(band)].resolution;
+    // APP_CONFIG.imageScaleFactor is a factor set on the server, how much it scales the web_scaled images.
+    let initImageScale = (APP_CONFIG.imageScaleFactor * resolution);
 
-    let img;
-    try {
-      img = await this.service.loadImage(url);
-    } catch(e) {
-      console.error('Failed to load image: '+url, e);
-      return;
+    let img = null;
+    if( this.imageMode === 'imagery' ) {
+      try {
+        img = await this.service.loadImage(url);
+      } catch(e) {
+        console.error('Failed to load image: '+url, e);
+      }
+    } else {
+      img = await this.service.getBlockHeighWidth(parseUrl.pathname);
+      img.width = img.width * initImageScale;
+      img.height = img.height * initImageScale;
     }
 
     let [year, month, day] = date.split('-').map(v => parseInt(v));
     let [min, sec] = minsec.split('-').map(v => parseInt(v));
     let datetime = new Date(year, month-1, day, parseInt(hour), min, sec, 0);
-
-    
     datetime = new Date(datetime.getTime() - (new Date().getTimezoneOffset()*60*1000))
-
     this.store.setLatestCaptureTime(datetime, Date.now() - datetime.getTime());
 
-    let resolution = APP_CONFIG.bandCharacteristics[parseInt(band)].resolution;
-    // APP_CONFIG.imageScaleFactor is a factor set on the server, how much it scales the web_scaled images.
-    let initImageScale = (APP_CONFIG.imageScaleFactor * resolution);
-
     let [x, y] = block.split('-').map(v => parseInt(v));
-
-
     block = {
       satellite,
       scale,
@@ -124,6 +126,18 @@ class ImageModel extends BaseModel {
 
   getHistogram() {
     return this.store.data.histogram;
+  }
+
+  setHistogramData(data, min, max) {
+    this.store.setHistogramData(data, min, max);
+  }
+
+  setHistogramMinMax(min, max) {
+    this.store.setHistogramMinMax(min, max);
+  }
+
+  setHistogramAbsMinMax(min, max) {
+    this.store.setHistogramAbsMinMax(min, max);
   }
 
 }

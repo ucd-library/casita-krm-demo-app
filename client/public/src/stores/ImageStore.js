@@ -13,7 +13,9 @@ class ImageStore extends BaseStore {
       histogram : {
         data : {},
         min : 5,
-        max : 190
+        max : 190,
+        absMin : 5,
+        absMax : 190
       }
     };
     this.events = {
@@ -24,13 +26,23 @@ class ImageStore extends BaseStore {
     };
   }
 
+  setHistogramAbsMinMax(min, max) {
+    this.data.histogram.absMin = min;
+    this.data.histogram.absMax = max;
+    this.emit(this.events.HISTOGRAM_UPDATE, this.data.histogram);
+  }
+
   setHistogramMinMax(min, max) {
     this.data.histogram.min = min;
     this.data.histogram.max = max;
+    this.emit(this.events.HISTOGRAM_UPDATE, this.data.histogram);
   }
 
-  setHistogramData(data) {
+  setHistogramData(data, min, max) {
     this.data.histogram.data = data;
+    if( min !== undefined ) this.data.histogram.min = min;
+    if( max !== undefined ) this.data.histogram.max = max;
+    this.emit(this.events.HISTOGRAM_UPDATE, this.data.histogram);
   }
 
   setLatestCaptureTime(date, ttd) {

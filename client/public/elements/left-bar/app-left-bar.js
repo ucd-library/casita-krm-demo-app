@@ -1,7 +1,10 @@
 import { LitElement } from 'lit-element';
 import render from "./app-left-bar.tpl.js"
+import clone from "clone"
 
-import "./app-imagery-selector"
+import bandMetadata from "../band-metadata"
+import "./app-image-view-selector"
+
 
 export default class AppLeftBar extends Mixin(LitElement)
   .with(LitCorkUtils) {
@@ -17,7 +20,8 @@ export default class AppLeftBar extends Mixin(LitElement)
       gridModeEnabled : {type: Boolean},
       labelModeEnabled : {type: Boolean},
       imageModeEnabled : {type: Boolean},
-      band : {type: Number}
+      band : {type: Number},
+      bands : {type: Array}
     }
   }
 
@@ -28,9 +32,11 @@ export default class AppLeftBar extends Mixin(LitElement)
     this.totalLightningStrikes = 0;
     this.imageCaptureTimeStr = 'NA';
     this.imageCaptureToDevice = 'NA';
-    this.avgLightningStrikes = 0;
+    this.avgLightningStrikes = 'NA';
 
     this.showLightning = false;
+
+    this.bands = clone(bandMetadata);
 
     this.selectedBlockGroups = [];
 
@@ -43,17 +49,35 @@ export default class AppLeftBar extends Mixin(LitElement)
   _onAppStateUpdate(e) {
     this.appState = e;
     
+    this.band = e.band;
+    this.imageModeEnabled = (e.imageMode === 'imagery');
     this.gridModeEnabled = e.gridModeEnabled ? true : false;
     this.labelModeEnabled = e.labelModeEnabled ? true : false;
 
-    this.imageModeEnabled = (e.mode !== 'boundary');
     this._renderSelectedBlockGroups();
   }
 
   _onLatestImageCaptureTimeUpdate(e) {
-    this.imageCaptureTimeStr = e.date.getFullYear()+'-'+(e.date.getMonth()+1)+'-'+e.date.getDate() + ', ' + 
-      e.date.getHours()+':'+e.date.getMinutes()+':'+e.date.getSeconds();
-    this.imageCaptureToDevice = Math.floor(e.ttd/1000);
+    let hour = e.date.getHours();
+    let meridiem = 'am';
+    if( hour > 12 ) {
+      hour = hour-12;
+      meridiem = 'pm'
+    }
+
+    let month = this._formatDT(e.date.getMonth()+1);
+    let date = this._formatDT(e.date.getDate());
+    let min = this._formatDT(e.date.getMinutes());
+    let sec = this._formatDT(e.date.getMinutes());
+
+    this.imageCaptureTimeStr = e.date.getFullYear()+'-'+month+'-'+date + ', ' + 
+      hour+':'+min+':'+sec+meridiem;
+    this.imageCaptureToDevice = Math.floor(e.ttd/1000)+'s';
+  }
+
+  _formatDT(val) {
+    if( val < 10 ) return '0'+val;
+    return val;
   }
 
   _renderSelectedBlockGroups() {
@@ -88,10 +112,9 @@ export default class AppLeftBar extends Mixin(LitElement)
     });
   }
 
-  // _onImageryModeClicked(e) {
-  //   let enabled = e.currentTarget.checked;
-  //   this.AppStateModel.set({imageModeEnabled: enabled});
-  // }
+  _onBandSelectChange(e) {
+    this.AppStateModel.set({band: parseInt(e.currentTarget.value)});
+  }
 
   _onGridModeClicked(e) {
     let enabled = e.currentTarget.checked;
@@ -124,7 +147,7 @@ export default class AppLeftBar extends Mixin(LitElement)
     this.totalLightningStrikes += e;
 
     let avg = this.totalLightningStrikes / ((Date.now() - this.lightningStrikeStartTime) / 1000);
-    this.avgLightningStrikes = Math.round(avg);
+    this.avgLightningStrikes = Math.round(avg)+' strikes/sec';
   }
 
   _onCloseClicked() {

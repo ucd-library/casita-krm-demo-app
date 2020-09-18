@@ -16,7 +16,6 @@ export default class AppCanvasMap extends Mixin(LitElement)
       canvasHeight : {type: Number},
       canvasWidth : {type: Number},
       filters : {type: Array},
-      imageModeEnabled : {type: Boolean},
       histogram : {type: Object},
       mapView : {type : Object}
     }
@@ -42,11 +41,11 @@ export default class AppCanvasMap extends Mixin(LitElement)
       zoom : 1
     }
 
-    let {min, max} = this.ImageModel.getHistogram();
-    this.absMin = min;
-    this.absMax = max;
+    let {absMin, absMax} = this.ImageModel.getHistogram();
+    this.absMin = absMin;
+    this.absMax = absMax;
 
-    this.imageModeEnabled = true;
+    this.imageMode = 'imagery';
 
     // this.imageMode = 'boundary';
     // this.imageProductDef = APP_CONFIG.imageProduct[this.imageMode];
@@ -137,15 +136,14 @@ export default class AppCanvasMap extends Mixin(LitElement)
     // this.absMin = histoEle.min;
     // this.absMax = histoEle.max;
 
-    this.AppStateModel.set({mode: this.imageMode});
+    this.AppStateModel.set({imageMode: this.imageMode});
 
-    // debugger;
     requestAnimationFrame(() => this.redraw());
   }
 
   onResize(first=false) {
     let w = window.innerWidth;
-    let h = window.innerHeight;
+    let h = window.innerHeight-60;
 
     this.canvasHeight = h;
     this.canvasWidth = w;
@@ -159,6 +157,7 @@ export default class AppCanvasMap extends Mixin(LitElement)
         x: (w/2) - (mapWidth/2), 
         y: 0
       }
+      this.mapView.zoomChange = true;
     }
 
     if( w > 768 ) this.infoOpen = false;
@@ -175,11 +174,43 @@ export default class AppCanvasMap extends Mixin(LitElement)
 
   _onAppStateUpdate(e) {
     this.appState = e;
+
+    if( this.band !== e.band ) {
+      blockStore.destroy();
+      this.band = e.band;
+      this.balancedContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+    } else{
+      blockStore.updateSettings(e);
+    }
+
     for( let id in blockStore.blocks ) {
       blockStore.blocks[id].updateSettings(e)
     }
 
-    // this.setImageryMode(e.mode);
+    if( this.imageMode != e.imageMode ) {
+      this.mapView.zoomChange = true;
+      this.imageMode = e.imageMode;
+    }
+
+    if( this.view !== e.view ) {
+      if( e.view === 'ca' ) {
+        this.mapView.offset = {
+          x: -2902 + (this.canvasWidth / 4), 
+          y: -445
+        }
+        this.mapView.zoom = 2;
+        this.mapView.zoomChange = true;
+        this.onResize();
+      } else if( e.view === 'world') {
+        this.onResize(true);
+      }
+
+
+      this.view = e.view;
+    }
+
+
+    // this.setimageMode(e.mode);
 
     // if( !e.selectedBlockGroups ) return;
     // if( this.selectedBlockGroups === e.selectedBlockGroups ) return;
@@ -187,52 +218,17 @@ export default class AppCanvasMap extends Mixin(LitElement)
     // this.infoOpen = true;
   }
 
+  _onImageHistogramUpdate(e) {
+    if( e.absMin !== this.absMin || e.absMax !== this.absMax ) {
+      this.absMin = e.absMin;
+      this.absMax = e.absMax;
+      this.rebalanceImgColor();
+    }
+  }
+
   _onFilldiskImageUpdate(data) {
     this.fulldiskImage = data;
     this.rebalanceImgColor();
-  }
-
-  setImageryMode(mode, gridModeEnabled=false) {
-    // debugger;
-    // this.gridModeEnabled = gridModeEnabled;
-
-    // if( !mode ) return;
-    // if( mode === this.imageMode ) return;
-
-    // this.shadowRoot.querySelector('#histogram').imageModeUpdate(mode);
-
-    // this.imageMode = mode;
-    // this.backgroundImage = null;
-
-    // this.imageModeEnabled = (mode !== 'boundary');
-
-    // this.imageProductDef = APP_CONFIG.imageProduct[this.imageMode];
-    // if( !this.imageProductDef ) {
-    //   throw new Error('Unknown imageMode: '+this.imageMode);
-    // }
-
-    // if( this.imageMode !== 'boundary' ) {
-    //   this.imgContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-    //   this.balancedContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-
-    //   let backgroundImage = new Image();
-    //   backgroundImage.onload = () => {
-    //     this.backgroundImage = backgroundImage;
-    //     // this.imgContext.drawImage(this.backgroundImage, 0, 0, this.canvasWidth, this.canvasHeight);
-    //     this._renderImgCanvas(true);
-    //   }
-    //   backgroundImage.src = '/'+this.imageMode+'.png';
-    // }
-
-    this.onResize();
-  }
-
-  _onInfoClose() {
-    this.infoOpen = false;
-  }
-
-  _onMenuIconClicked() {
-    this.infoOpen = true;
   }
 
   addBlock(value) {
@@ -244,42 +240,6 @@ export default class AppCanvasMap extends Mixin(LitElement)
   setLightning(lightning) {
     strikeStore.addStrikes(lightning);
   }
-
-  ensureFilter(value) {
-    let updated = false;
-    
-    let filter = this.filters.find(item => item.label === value.label);
-    if( !filter ) {
-      filter = {
-        label : value.label,
-        enabled : true,
-        bands : []
-      }
-      this.filters.push(filter);
-      updated = true;
-    }
-
-    let band = filter.bands.find(item => item.id === value.band);
-    if( !band ) {
-      band = {
-        apid: value.apid,
-        id : value.band,
-        enabled : true
-      }
-      filter.bands.push(band);
-      filter.bands.sort((a, b) => {
-        if( parseInt(a.id) < parseInt(b.id) ) return -1;
-        if( parseInt(a.id) > parseInt(b.id) ) return 1;
-        return 0;
-      })
-      updated = true;
-    }
-
-    if( updated ) {
-      this.requestUpdate();
-    }
-  }
-
 
   redraw() {
     this.context.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
@@ -303,13 +263,13 @@ export default class AppCanvasMap extends Mixin(LitElement)
     this.mapView.zoomChange = false;
 
     requestAnimationFrame(() => {
-      // requestAnimationFrame(() => {
-        requestAnimationFrame(() => this.redraw());
-      // });
+      requestAnimationFrame(() => this.redraw());
     });
   }
 
   rebalanceImgColor() {
+    if( this.imageMode !== 'imagery' ) return;
+
     if( this.rebalanceImgColorTimer !== -1 ) {
       clearTimeout(this.rebalanceImgColorTimer);
     }
@@ -321,11 +281,10 @@ export default class AppCanvasMap extends Mixin(LitElement)
   }
 
   _rebalanceImgColor() {
-    console.log('color rebalance start');
-
     let data = [], block;
     for( let id in blockStore.blocks ) {
       block = blockStore.blocks[id];
+      if( !block.sampledImgData ) continue;
       data.push({
         id,
         data: block.sampledImgData
@@ -351,9 +310,9 @@ export default class AppCanvasMap extends Mixin(LitElement)
     this.fit.min = e.data.min;
     this.fit.max = e.data.max;
 
-    // this.balancedContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-    this._setBalancedData(e.data);
+    this.ImageModel.setHistogramData(e.data.histogram, e.data.min, e.data.max);
 
+    this._setBalancedData(e.data);
     this.redrawRasterMask();
   }
 

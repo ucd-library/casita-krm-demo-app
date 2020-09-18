@@ -21,6 +21,19 @@ class ImageService extends BaseService {
     });
   }
 
+  async getBlockHeighWidth(imgPath) {
+    imgPath = imgPath.split('/');
+    imgPath.pop();
+
+    let resp = await fetch(APP_CONFIG.dataServer.url + imgPath.join('/') + '/fragment-metadata.json');
+    let metadata = await resp.json();
+
+    return {
+      width: metadata['fragment_headers_0'].imagePayload.IMAGE_BLOCK_WIDTH,
+      height: metadata['fragment_headers_0'].imagePayload.IMAGE_BLOCK_HEIGHT
+    }
+  }
+
   async getMesoscaleCoord(args) {
     if( args.apid[0] == 'd' ) {
       args.apid = 'c'+(parseInt(args.band) - 1);

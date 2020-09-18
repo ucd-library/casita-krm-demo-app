@@ -25,6 +25,7 @@ class MapBlockRenderer extends EventEmitter {
   updateSettings(opts) {
     this.gridModeEnabled = opts.gridModeEnabled ? true : false;
     this.labelModeEnabled = opts.labelModeEnabled ? true : false;
+    this.imageMode = opts.imageMode || 'imagery';
   }
 
   destroy() {
@@ -53,6 +54,12 @@ class MapBlockRenderer extends EventEmitter {
     this.canvas.height = block.img.height;
     this.canvasCtx.clearRect(0, 0, block.img.width, block.img.height);
     
+    if( !block.img.src ) {
+      this.sampledImgData = null;
+      this.canvasImgData = null;
+      return;
+    }
+
     // initialize the 'balanced raster' so we have one
     this.canvasCtx.drawImage(block.img, 0, 0, block.img.width, block.img.height);
 
@@ -68,6 +75,8 @@ class MapBlockRenderer extends EventEmitter {
   }
 
   setBalancedData(min, max, imgContext) {
+    if( !this.block.img.src ) return;
+
     if( this.fit.min === min && this.fit.max === max ) return false;
     this.fit = {min, max};
 
@@ -191,8 +200,10 @@ class MapBlockRenderer extends EventEmitter {
    * @param {*} imgContext canvas 2d context
    */
   redrawImg(imgContext) {
-    let {top, left, bottom, right} = this.getBounds();
+    if( !this.block.img.src ) return;
+    if( this.imageMode !== 'imagery' ) return;
 
+    let {top, left, bottom, right} = this.getBounds();
     imgContext.clearRect(left, top, (right - left), (bottom - top));
     imgContext.drawImage(this.canvas, left, top, (right - left), (bottom - top));
   }

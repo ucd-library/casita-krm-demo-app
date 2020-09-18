@@ -75,8 +75,8 @@ html {
 body, html {
   font-family      : proxima-nova,"Lucida Grande","Lucida Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
   font-size        : var(--font-size);
-  font-weight      : var( --font-weight-normal);
-  line-height      : calc(var(--font-size) * 1.625);
+  font-weight      : var(--font-weight-normal);
+  line-height      : calc(var(--font-size) * 1.4);
   margin           : 0;
   padding          : 0;
   background-color : var(--tcolor-bg);
