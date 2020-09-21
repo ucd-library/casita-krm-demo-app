@@ -7,6 +7,8 @@ import strikeStore from "./render/strike-store"
 import worker from "../balance-worker"
 import "../app-histogram-slider"
 
+window.blockStore = blockStore;
+
 export default class AppCanvasMap extends Mixin(LitElement)
   .with(LitCorkUtils) {
 
@@ -58,7 +60,9 @@ export default class AppCanvasMap extends Mixin(LitElement)
     this.rebalanceImgColorTimer = -1;
     this.unhandledResize = false;
 
-    this.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--tcolor-bg')
+    let styles = getComputedStyle(document.documentElement);
+    this.backgroundColor = styles.getPropertyValue('--tcolor-bg');
+    this.globeBackgroundColor = styles.getPropertyValue('--gray6');
 
     worker.onmessage = e => this._onColorRebalanceWorkerComplete(e);
 
@@ -245,7 +249,7 @@ export default class AppCanvasMap extends Mixin(LitElement)
     if( this.band !== e.band ) {
       blockStore.destroy();
       this.band = e.band;
-      this.balancedContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+      this.clearBalancedCanvas();
     } else{
       blockStore.updateSettings(e);
     }
@@ -264,11 +268,11 @@ export default class AppCanvasMap extends Mixin(LitElement)
         this.mapView.zoom = 2;
 
         
-        let centerX = 3164 - (this.canvasWidth/3);
-        let centerY = 200 - (this.canvasHeight/3);
+        let centerX = 3200 - (this.canvasWidth/3);
+        let centerY = -100 - (this.canvasHeight/3);
 
         let newOffsetX = centerX*-1;
-        let newOffsetY = centerY*-1;
+        let newOffsetY = centerY;
 
         this.mapView.offset = {
           x : newOffsetX,
@@ -331,7 +335,7 @@ export default class AppCanvasMap extends Mixin(LitElement)
     }
 
     if( this.mapView.panning || this.mapView.zoomChange) {
-      this.balancedContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+      this.clearBalancedCanvas();
       this.redrawImgBlocks();
       this.redrawRasterMask();
     }
@@ -451,6 +455,28 @@ export default class AppCanvasMap extends Mixin(LitElement)
     } catch(e) {
       console.error('error making raster mask', e)
     }
+  }
+
+  clearBalancedCanvas() {
+    this.balancedContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+
+    let centerx = this.fulldiskWidth/2;
+    let centery = this.fulldiskHeight/2;
+
+    let screenX = Math.floor((centerx/this.mapView.zoom) + this.mapView.offset.x)-5;
+    let screenY = Math.floor((centery/this.mapView.zoom) + this.mapView.offset.y);
+
+    this.balancedContext.beginPath();
+    this.balancedContext.arc(
+      screenX,
+      screenY, 
+      (centerx/this.mapView.zoom), // radius
+      0, 
+      2 * Math.PI
+    );
+    this.balancedContext.closePath();
+    this.balancedContext.fillStyle = this.globeBackgroundColor;
+    this.balancedContext.fill();
   }
 
   _onCanvasClicked(e) {

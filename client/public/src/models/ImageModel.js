@@ -140,6 +140,22 @@ class ImageModel extends BaseModel {
     this.store.setHistogramAbsMinMax(min, max);
   }
 
+  async getProductStatus() {
+    let cached = this.store.data.productStatus;
+
+    try {
+      if( cached.request ) {
+        await cached.request;
+      } else {
+        await this.service.loadProductStatus();
+      }
+    } catch(e) {
+      console.error(e);
+    }
+
+    return this.store.data.productStatus;
+  }
+
 }
 
 module.exports = new ImageModel();

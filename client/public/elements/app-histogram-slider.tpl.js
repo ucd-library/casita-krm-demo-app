@@ -61,10 +61,10 @@ return html`
 <div class="slider">
 
   <div class="line"></div>
-  <button id="min" @mousedown="${this._onSliderMouseDown}" style="left: ${this.min-4}px">
+  <button id="min" @mousedown="${this._onSliderMouseDown}" @touchstart="${this._onTouchStart}" style="left: ${this.min-4}px">
     <div class="btn-line"></div>
   </button>
-  <button id="max" @mousedown="${this._onSliderMouseDown}" style="left: ${this.max-4}px">
+  <button id="max" @mousedown="${this._onSliderMouseDown}" @touchstart="${this._onTouchStart}" style="left: ${this.max-4}px">
     <div class="btn-line"></div>
   </button>
 </div>

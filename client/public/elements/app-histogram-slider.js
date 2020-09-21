@@ -28,9 +28,11 @@ export default class AppHistogramSlider extends Mixin(LitElement)
     this.render = render.bind(this);
 
     window.addEventListener('mouseup', () => this._onMouseUp());
-    window.addEventListener('mouseout', () => this._onMouseOut());
+    window.addEventListener('mouseout', () => this._onMouseUp());
     window.addEventListener('mousemove', e => this._onMouseMove(e));
-    // window.addEventListener('')
+    window.addEventListener('touchmove', e => this._onTouchMove(e));
+    window.addEventListener('touchend', e => this._onMouseUp());
+    window.addEventListener('touchcancel', e => this._onMouseUp());
 
     this._injectModel('ImageModel');
   }
@@ -61,6 +63,18 @@ export default class AppHistogramSlider extends Mixin(LitElement)
     };
   }
 
+  _onTouchStart(e) {
+    this.sliderAdjusting = {
+      type: e.currentTarget.id,
+      startX: e.touches[0].clientX,
+      startVal : e.currentTarget.id === 'min' ? this.min : this.max
+    };
+  }
+
+  _onTouchMove(e) {
+    this._onMouseMove(e.touches[0]);
+  }
+
   _onMouseMove(e) {
     if( !this.sliderAdjusting ) return;
     this.sliderAdjusting.current = e.clientX;
@@ -71,23 +85,18 @@ export default class AppHistogramSlider extends Mixin(LitElement)
       let val = this.sliderAdjusting.startVal - diff;
       if( val < 0 ) val = 0;
       if( val >= this.max ) val = this.max-1;
-      this.min = val;
+      this.min = Math.floor(val);
     } else {
       let val = this.sliderAdjusting.startVal - diff;
       if( val > 256 ) val = 256;
       if( val <= this.min ) val = this.min+1;
-      this.max = val;
+      this.max = Math.floor(val);
     }
 
     this.redraw();
   }
 
   _onMouseUp() {
-    if( !this.sliderAdjusting ) return;
-    this.setAbsValues();
-  }
-
-  _onMouseOut() {
     if( !this.sliderAdjusting ) return;
     this.setAbsValues();
   }
@@ -170,10 +179,10 @@ export default class AppHistogramSlider extends Mixin(LitElement)
         this.context.fillRect(i, 0, 1, this.histogramHeight);
       }
       
-      if( i === this.selectedValue ) {
-        this.context.fillStyle = 'red';
-        this.context.fillRect(i, 0, 1, this.histogramHeight);
-      }
+      // if( i === this.selectedValue ) {
+      //   this.context.fillStyle = 'red';
+      //   this.context.fillRect(i, 0, 1, this.histogramHeight);
+      // }
     }
   }
 

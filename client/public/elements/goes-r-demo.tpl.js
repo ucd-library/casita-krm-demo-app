@@ -8,7 +8,11 @@ ${sharedStyles}
 <style>
   :host {
     display: block;
-    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
   }
 
   .layout {
@@ -22,12 +26,26 @@ ${sharedStyles}
     position: relative;
   }
 
-  app-left-bar {
+  .left-bar-container {
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
     z-index: 100;
+
+    background: rgb(0, 0, 0);
+    width: 375px;
+    background: linear-gradient(
+      90deg, 
+      rgba(0,0,0,1) 0%, 
+      rgba(0,0,0,0.3) 89%,
+      rgba(0,0,0,0) 100%
+    );
+    overflow-y: auto;
+  }
+
+  app-left-bar {
+    padding: 18px 36px 18px 18px;
   }
 
   .nav-panel {
@@ -63,11 +81,11 @@ ${sharedStyles}
     .nav-panel {
       display: block;
     }
-    app-left-bar {
+    .left-bar-container {
       top: 51px;
       display: none;
     }
-    app-left-bar[open] {
+    .left-bar-container[open] {
       display: block;
     }
   }
@@ -88,7 +106,10 @@ ${sharedStyles}
       </div>
     </div>
 
-    <app-left-bar ?open="${this.showNav}"></app-left-bar>
+    <div class="left-bar-container" ?open="${this.showNav}">
+      <app-left-bar ?open="${this.showNav}"></app-left-bar>
+    </div>
+    
 
     <app-canvas-map id="canvas"></app-canvas-map>
   </div>

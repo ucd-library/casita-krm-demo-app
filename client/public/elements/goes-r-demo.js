@@ -32,6 +32,11 @@ export default class GoesRDemo extends Mixin(LitElement)
     this.AppStateModel.set({
       band : 2
     });
+
+    // ios hack
+    document.addEventListener('touchmove', function (event) {
+      if (event.scale !== 1) { event.preventDefault(); }
+    }, { passive: false });
   }
 
   firstUpdated() {

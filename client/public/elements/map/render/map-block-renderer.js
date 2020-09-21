@@ -1,7 +1,12 @@
 const EventEmitter = require('events');
 const {EventBus} = require('@ucd-lib/cork-app-utils');
 
-const COLOR_BALANCE_SAMPLE_RATE = 16;
+// const COLOR_BALANCE_SAMPLE_RATE = 16;
+let COLOR_BALANCE_SAMPLE_RATE = 32;
+if( screen.width < 700 || screen.height < 700 ) {
+  COLOR_BALANCE_SAMPLE_RATE = 64;
+}
+console.log('Color sample rate set to: '+ COLOR_BALANCE_SAMPLE_RATE);
 
 class MapBlockRenderer extends EventEmitter {
 
@@ -18,7 +23,7 @@ class MapBlockRenderer extends EventEmitter {
     this.map.shadowRoot.querySelector('#rasterCanvasBlocks').appendChild(this.canvas);
     this.canvasCtx = this.canvas.getContext('2d');
 
-    this.render = false;
+    this.hasImgSrc = false;
     this.fit = {};
 
     let styles = getComputedStyle(document.documentElement);
@@ -50,7 +55,7 @@ class MapBlockRenderer extends EventEmitter {
   }
 
   setBlock(block) {
-    this.render = true;
+    this.hasImgSrc = block.img.src ? true : false;
     this.fit = {};
 
     this.block = block;
@@ -205,7 +210,7 @@ class MapBlockRenderer extends EventEmitter {
    * @param {*} imgContext canvas 2d context
    */
   redrawImg(imgContext) {
-    if( !this.block.img.src ) return;
+    if( !this.hasImgSrc ) return;
     if( this.imageMode !== 'imagery' ) return;
 
     let {top, left, bottom, right} = this.getBounds();
