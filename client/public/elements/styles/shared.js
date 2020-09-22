@@ -38,6 +38,12 @@ export default html`
     color: var(--tcolor-text);
   }
 
+  .text-gray {
+    font-size: 14px;
+    font-weight: var(--font-weight);
+    color: var(--color-gray70);
+  }
+
   .color-balance {
     font-size: 13px;
     font-weight: var(--font-weight);

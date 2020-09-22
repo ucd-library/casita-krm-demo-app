@@ -32,6 +32,15 @@ ${sharedStyles}
     color: var(--tcolor-primary);
     -webkit-appearance: none;
   }
+
+  .band-displayed {
+    display: flex;
+    align-items: center;
+  }
+
+  .band-displayed > div {
+    flex: 1;
+  }
 </style>  
 
 <div class="section">
@@ -65,7 +74,10 @@ ${sharedStyles}
     </div>
   </div>
 
-  <h3>Band Displayed</h3>
+  <h3 class="band-displayed">
+    <div>Band Displayed</div>
+    <iron-icon icon="info" @click="${this._onBandInfoClicked}"></iron-icon>
+  </h3>
   <div class="band-select">
     <select .value="${this.band}" @change="${this._onBandSelectChange}">
       ${this.bands.map(item => html`

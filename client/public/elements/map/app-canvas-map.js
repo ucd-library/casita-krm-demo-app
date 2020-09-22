@@ -52,6 +52,8 @@ export default class AppCanvasMap extends Mixin(LitElement)
     this.fulldiskWidth = (2732 * 4);
     this.fulldiskHeight = (2712 * 4);
 
+    this.caCenter = [6705.5, 1718.5];
+
     // this.imageMode = 'boundary';
     // this.imageProductDef = APP_CONFIG.imageProduct[this.imageMode];
 
@@ -75,34 +77,52 @@ export default class AppCanvasMap extends Mixin(LitElement)
   }
 
   _onScroll(e) {
+    let rect = this.getBoundingClientRect();
+    let pt = [e.x, e.y - rect.top];
+
     if( e.deltaY > 0 ) {
-      this._updateZoom(this.mapView.zoom - (this.mapView.zoom * 0.2))
+      this._zoomTo(this.mapView.zoom - (this.mapView.zoom * 0.2), pt)
     } else {
-      this._updateZoom(this.mapView.zoom + (this.mapView.zoom * 0.2));
+      this._zoomTo(this.mapView.zoom + (this.mapView.zoom * 0.2), pt);
     }
   }
 
-  _updateZoom(amount) {
-    let orgZoom = this.mapView.zoom;
-    this.mapView.zoom = amount;
-    if( this.mapView.zoom > 20 ) this.mapView.zoom = 20;
-    if( this.mapView.zoom < 0.25 ) this.mapView.zoom = 0.25;
+  _zoomTo(zoom, point) {
+    let mapXy = this._screenPtToMapPt(point);
 
-    let centerX = this.canvasWidth/2;
-    let centerY = this.canvasHeight/2;
+    if( zoom > 20 ) zoom = 20;
+    if( zoom < 0.25 ) zoom = 0.25;
 
-    let xMap = (centerX - this.mapView.offset.x) * orgZoom;
-    let yMap = (centerY - this.mapView.offset.y) * orgZoom;
+    let offsets = this._getOffsetForMapXyZoom(mapXy, point, zoom);
 
-    let newOffsetX = centerX - (xMap / this.mapView.zoom);
-    let newOffsetY = centerY - (yMap / this.mapView.zoom);
-
+    this.mapView.zoom = zoom;
     this.mapView.offset = {
-      x : newOffsetX,
-      y : newOffsetY,
+      x : offsets[0],
+      y : offsets[1],
     }
 
     this.mapView.zoomChange = true;
+  }
+
+  _screenPtToMapPt(pt) {
+    return [
+      (pt[0] - this.mapView.offset.x) * this.mapView.zoom,
+      (pt[1] - this.mapView.offset.y) * this.mapView.zoom
+    ]
+  }
+
+  _mapPtToScreePt(pt) {
+    return [
+      (pt[0] / this.mapView.zoom) + this.mapView.offset.x,
+      (pt[1] / this.mapView.zoom) + this.mapView.offset.y
+    ]
+  }
+
+  _getOffsetForMapXyZoom(mPt, sPt, zoom) {
+    return [
+      (-1 * mPt[0]/zoom) + sPt[0],
+      (-1 * mPt[1]/zoom) + sPt[1],
+    ]
   }
 
   _onMouseDown(e) {
@@ -119,7 +139,6 @@ export default class AppCanvasMap extends Mixin(LitElement)
   _onTouchStart(e) {
     if( this.mapView.zooming ) return;
 
-    console.log(e.touches.length);
     if( e.touches.length === 1 ) {
       this.mapView.panning = true;
       this.mapView.panStartOffset = [
@@ -180,8 +199,13 @@ export default class AppCanvasMap extends Mixin(LitElement)
         Math.pow(e.touches[0].clientY - e.touches[1].clientY, 2)
       )
 
+      let rect = this.getBoundingClientRect();
+      let midX = (e.touches[0].clientX + e.touches[1].clientX)/2;
+      let midY = (e.touches[0].clientY + e.touches[1].clientY - rect.top)/2;
+
       let amount = (this.mapView.touchZoomStartDiff - diff) / 75;
-      this._updateZoom(this.mapView.zoom + (this.mapView.zoom * amount))
+
+      this._zoomTo(this.mapView.zoom + (this.mapView.zoom * amount), [midX, midY]);
       this.mapView.touchZoomStartDiff = diff;
     }
   }
@@ -263,31 +287,42 @@ export default class AppCanvasMap extends Mixin(LitElement)
       this.imageMode = e.imageMode;
     }
 
-    if( this.view !== e.view ) {
+    // if( this.view !== e.view ) {
       if( e.view === 'ca' ) {
-        this.mapView.zoom = 2;
-
-        
-        let centerX = 3200 - (this.canvasWidth/3);
-        let centerY = -100 - (this.canvasHeight/3);
-
-        let newOffsetX = centerX*-1;
-        let newOffsetY = centerY;
-
+        this.mapView.zoom = 2.2;
+        let offsets = this._getOffsetForMapXyZoom(
+          this.caCenter, 
+          [this.canvasWidth/2, this.canvasHeight/2],
+          this.mapView.zoom
+        );
         this.mapView.offset = {
-          x : newOffsetX,
-          y : newOffsetY,
+          x : offsets[0],
+          y : offsets[1],
+        }
+        this.mapView.zoomChange = true;
+
+      } else if( e.view === 'world') {
+        if( this.canvasWidth < this.canvasHeight ) {
+          this.mapView.zoom = this.fulldiskWidth / this.canvasWidth;
+        } else {
+          this.mapView.zoom = this.fulldiskHeight / this.canvasHeight;
         }
 
+        let offsets = this._getOffsetForMapXyZoom(
+          [this.fulldiskWidth/2, this.fulldiskHeight/2], 
+          [this.canvasWidth/2, this.canvasHeight/2],
+          this.mapView.zoom
+        );
+        this.mapView.offset = {
+          x : offsets[0],
+          y : offsets[1],
+        }
         this.mapView.zoomChange = true;
-        this.onResize();
-      } else if( e.view === 'world') {
-        this.onResize(true);
       }
 
 
       this.view = e.view;
-    }
+    // }
 
 
     // this.setimageMode(e.mode);

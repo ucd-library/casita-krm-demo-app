@@ -1,6 +1,6 @@
 const app = require('express')();
+const config = require('./lib/config');
 
 require('./controllers/static')(app);
 
-
-app.listen(3000, () => console.log('goes-r demo webapp listening on port: 3000'));
+app.listen(config.server.port, () => console.log('goes-r demo webapp listening on port: '+config.server.port));

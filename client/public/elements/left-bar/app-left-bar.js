@@ -2,8 +2,9 @@ import { LitElement } from 'lit-element';
 import render from "./app-left-bar.tpl.js"
 import clone from "clone"
 
-import bandMetadata from "../band-metadata"
+import BAND_METADATA from "../band-metadata"
 import "./app-image-view-selector"
+import "../band-info-popup/app-band-info-popup"
 
 
 export default class AppLeftBar extends Mixin(LitElement)
@@ -36,7 +37,10 @@ export default class AppLeftBar extends Mixin(LitElement)
 
     this.showLightning = false;
 
-    this.bands = clone(bandMetadata);
+    this.bands = clone(BAND_METADATA);
+
+    this.infoPopup = document.createElement('app-band-info-popup');
+    document.body.appendChild(this.infoPopup);
 
     this.selectedBlockGroups = [];
 
@@ -150,8 +154,9 @@ export default class AppLeftBar extends Mixin(LitElement)
     this.avgLightningStrikes = Math.round(avg)+' strikes/sec';
   }
 
-  _onCloseClicked() {
-    this.dispatchEvent(new CustomEvent('close'));
+
+  _onBandInfoClicked() {
+    this.infoPopup.show(this.band);
   }
 
 }
