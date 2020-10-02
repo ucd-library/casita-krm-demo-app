@@ -150,8 +150,8 @@ class ImageService extends BaseService {
     dir = dir + '/' + apids[0];
 
     let files = await this.ls(dir);
-    if( files.includes('web_scaled.png') ) {
-      return dir+'/web_scaled.png';
+    if( files.includes('web-scaled.png') ) {
+      return dir+'/web-scaled.png';
     }
     return false;
   }

@@ -44,8 +44,9 @@ class ImageModel extends BaseModel {
 
     let url = APP_CONFIG.dataServer.url + parseUrl.pathname;
     let resolution = APP_CONFIG.bandCharacteristics[parseInt(band)].resolution;
+
     // APP_CONFIG.imageScaleFactor is a factor set on the server, how much it scales the web_scaled images.
-    let initImageScale = (APP_CONFIG.imageScaleFactor * resolution);
+    let initImageScale = (APP_CONFIG.imageScaleFactor / resolution);
 
     let img = null;
     if( this.imageMode === 'imagery' ) {
@@ -67,6 +68,10 @@ class ImageModel extends BaseModel {
     this.store.setLatestCaptureTime(datetime, Date.now() - datetime.getTime());
 
     let [x, y] = block.split('-').map(v => parseInt(v));
+    // console.log('scale factor='+APP_CONFIG.imageScaleFactor, 'resolution='+resolution, 'initImageScale='+initImageScale);
+
+    // if( resolution === 1 ) resolution = 2;
+
     block = {
       satellite,
       scale,
@@ -81,13 +86,22 @@ class ImageModel extends BaseModel {
           width : img.width / initImageScale,
           offset : [0, 0]
         },
+        // scaled : {
+        //   tl : [
+        //     x,
+        //     y
+        //   ],
+        //   height : img.height * initImageScale,
+        //   width : img.width * initImageScale,
+        //   offset : [0, 0]
+        // },
         scaled : {
           tl : [
-            x * initImageScale,
-            y * initImageScale
+            x * resolution,
+            y * resolution
           ],
-          height : img.height,
-          width : img.width,
+          height : img.height * APP_CONFIG.imageScaleFactor,
+          width : img.width * APP_CONFIG.imageScaleFactor,
           offset : [0, 0]
         }
       },
@@ -108,7 +122,8 @@ class ImageModel extends BaseModel {
       let y = halfFdy/spRes - halfCy/spRes - satOffsets.conus.y/spRes;
 
       block.location.original.offset = [x, y];
-      block.location.scaled.offset = [x * initImageScale, (y * initImageScale) + FULLDISK_FUDGE_FACTOR];
+      // block.location.scaled.offset = [x * initImageScale, (y * initImageScale) + FULLDISK_FUDGE_FACTOR];
+      block.location.scaled.offset = [x * resolution, (y * resolution) + FULLDISK_FUDGE_FACTOR];
     }
 
     if( scale === 'mesoscale' ) {
@@ -118,7 +133,8 @@ class ImageModel extends BaseModel {
       if( error ) return;
 
       block.location.original.offset = [left, top];
-      block.location.scaled.offset = [left * initImageScale, (top * initImageScale) + FULLDISK_FUDGE_FACTOR];
+      // block.location.scaled.offset = [left * initImageScale, (top * initImageScale) + FULLDISK_FUDGE_FACTOR];
+      block.location.scaled.offset = [left * resolution, (top * resolution) + FULLDISK_FUDGE_FACTOR];
     }
 
     this.store.onBlockLoad(block);

@@ -30,7 +30,7 @@ class SocketService extends BaseService {
   }
 
   setBand(band) {
-    let subjectId = `file:///west/{scale}/{date}/{hour}/{minsec}/${band}/{apid}/blocks/{block}/web_scaled.png`
+    let subjectId = `file:///west/{scale}/{date}/{hour}/{minsec}/${band}/{apid}/blocks/{block}/web-scaled.png`
     if( this.store.data.band.subjectId === subjectId ) return;
 
     let currentId = this.store.data.band.subjectId;

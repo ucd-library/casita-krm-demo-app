@@ -30,7 +30,7 @@ export default class GoesRDemo extends Mixin(LitElement)
 
     this._injectModel('AppStateModel', 'SocketModel', 'ImageModel');
     this.AppStateModel.set({
-      band : 2
+      band : 1
     });
 
     // ios hack
