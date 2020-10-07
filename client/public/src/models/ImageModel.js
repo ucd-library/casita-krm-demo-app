@@ -1,8 +1,7 @@
 const {BaseModel} = require('@ucd-lib/cork-app-utils');
 const ImageService = require('../services/ImageService');
 const ImageStore = require('../stores/ImageStore');
-const AppStateModel = require('./AppStateModel');
-const proj4 = require('proj4').default;
+// const proj4 = require('proj4').default;
 
 
 const FULLDISK_FUDGE_FACTOR = 18;
@@ -12,7 +11,7 @@ class ImageModel extends BaseModel {
   constructor() {
     super();
 
-    proj4.defs('geos', '+proj=geos +x_0=0 +y_0=0 +lon_0=-137 +sweep=x +h=35786023 +ellps=GRS80 +datum=NAD83 +units=m +no_defs');
+    // proj4.defs('geos', '+proj=geos +x_0=0 +y_0=0 +lon_0=-137 +sweep=x +h=35786023 +ellps=GRS80 +datum=NAD83 +units=m +no_defs');
 
     this.store = ImageStore;
     this.service = ImageService;
@@ -37,6 +36,10 @@ class ImageModel extends BaseModel {
   }
 
   async onSocketMessage(msg) {
+    if( msg.subject.match(/\/payload.bin$/) ) {
+      console.log(msg);
+    }
+
     if( !msg.subject.match(/\.png$/) ) return;
 
     let parseUrl = new URL(msg.subject);

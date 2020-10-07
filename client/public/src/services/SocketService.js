@@ -15,6 +15,11 @@ class SocketService extends BaseService {
       path : APP_CONFIG.dataServer.wsPath
     });
 
+    this.subjectIds = {
+      bands : [],
+      lightning : []
+    };
+
     this.io.on('connect', () => this.onConnect());
     this.io.on('message', msg => this.onMessage(msg));
 
@@ -29,23 +34,45 @@ class SocketService extends BaseService {
     this.model = model;
   }
 
-  setBand(band) {
-    let subjectId = `file:///west/{scale}/{date}/{hour}/{minsec}/${band}/{apid}/blocks/{block}/web-scaled.png`
-    if( this.store.data.band.subjectId === subjectId ) return;
 
-    let currentId = this.store.data.band.subjectId;
-    if( currentId && this.connected ) {
-      console.log('Unlistening to: '+this.store.data.band.subjectId);
-      this.io.emit('unlisten', JSON.stringify([currentId]));
+  setBand(band) {
+    if( this.store.data.band === band ) {
+      return;
     }
 
-    this.store.data.band = {band, subjectId};
+    if( this.subjectIds.bands.length && this.connected ) {
+      console.log('Unlistening to: ', this.subjectIds.bands);
+      this.io.emit('unlisten', JSON.stringify(this.subjectIds.bands));
+    }
+
+    this.subjectIds.bands = [
+      `file:///west/{scale}/{date}/{hour}/{minsec}/${band}/{apid}/blocks/{block}/web-scaled.png`,
+      `file:///west/mesocale/{date}/{hour}/{minsec}/${band}/{apid}/blocks/{block}/payload.bin`
+    ]
+    this.store.data.band = band;
 
     if( this.connected ) {
-      console.log('Listening to: '+this.store.data.band.subjectId);
-      this.io.emit('listen', JSON.stringify([{
-        subject : subjectId
-      }]));
+      this._listen(this.subjectIds.bands)
+    }
+  }
+
+  toggleLightning(enabled=true) {
+    if( !enabled ) enabled = false;
+
+    if( enabled ) {
+      this.subjectIds.lightning = [
+        `file:///west/lightning-detection-event-data/{date}/{hour}/{min-sec}/summary/301/stats.json`,
+        `file:///west/lightning-detection-flash-data/{date}/{hour}/{min-sec}/{ms}/302/payload.json`
+      ]
+    }
+
+    if( !this.connected ) return;
+
+    if( enabled ) {
+      this._listen(this.subjectIds.lightning)
+    } else if( this.subjectIds.lightning.length ) {
+      this.io.emit('unlisten', JSON.stringify(this.subjectIds.lightning));
+      this.subjectIds.lightning = [];
     }
   }
 
@@ -54,12 +81,20 @@ class SocketService extends BaseService {
     this.connected = true;
 
     // make sure we reconnect 
-    if( this.store.data.band.subjectId ) {
-      console.log('Listening to: '+this.store.data.band.subjectId);
-      this.io.emit('listen', JSON.stringify([{
-        subject : this.store.data.band.subjectId
-      }]));
+    if( this.subjectIds.bands.length ) {
+      this._listen(this.subjectIds.bands)
     }
+    if( this.subjectIds.lightning.length ) {
+     this._listen(this.subjectIds.lightning)
+    }
+  }
+
+  _listen(subjects) {
+    if( subject.length === 0 ) return;
+    console.log('listening to: ', subjects);
+    this.io.emit('listen', JSON.stringify(
+      subjects.map(subject => ({subject}))
+    ));
   }
 
   onDisconnect() {

@@ -8,7 +8,7 @@ class SocketStore extends BaseStore {
     this.data = {
       band : {},
       boundary : {},
-      lightening : [],
+      lightningEnabled : false,
       strikeCount : 0
     };
     this.events = {
@@ -16,6 +16,10 @@ class SocketStore extends BaseStore {
       LIGHTINING_EVENTS_UPDATE : 'lightning-events-update',
       LIGHTINING_STRIKE_COUNT_UPDATE : 'lightning-strike-count-update'
     };
+  }
+
+  setLightningEnabled(enabled) {
+    this.data.lightningEnabled = enabled;
   }
 
   onImageBoundaryLoad(id, payload) {

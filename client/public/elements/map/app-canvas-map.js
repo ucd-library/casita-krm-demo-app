@@ -2,6 +2,7 @@ import { LitElement } from 'lit-element';
 import render from "./app-canvas-map.tpl.js"
 
 import "@polymer/iron-icons"
+import {EventBus} from '@ucd-lib/cork-app-utils'
 import blockStore from "./render/block-store"
 import strikeStore from "./render/strike-store"
 import worker from "../balance-worker"
@@ -74,6 +75,10 @@ export default class AppCanvasMap extends Mixin(LitElement)
     window.addEventListener('mouseout', e => this._onMouseOut(e));
     window.addEventListener('touchend', e => this._onMouseUp(e));
     window.addEventListener('resize', () => this.onResize());
+
+    EventBus.on('lightning-flash-update', e => {
+      strikeStore.addStrikes(e);
+    });
   }
 
   _onScroll(e) {
@@ -352,18 +357,14 @@ export default class AppCanvasMap extends Mixin(LitElement)
     this.rebalanceImgColor();
   }
 
-  setLightning(lightning) {
-    strikeStore.addStrikes(lightning);
-  }
-
   redraw() {
     this.context.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
 
     let now = Date.now();
     
-    // for( let strike of strikeStore.strikes ) {
-    //   strike.redraw(this.context, this.scaleFactor, now);
-    // }
+    for( let strike of strikeStore.strikes ) {
+      strike.redraw(this.context, this.mapView, now);
+    }
     
     for( let id in blockStore.blocks ) {
       blockStore.blocks[id].redraw(this.context, now);

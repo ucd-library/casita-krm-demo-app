@@ -1,4 +1,5 @@
 import { LitElement } from 'lit-element';
+import {EventBus} from '@ucd-lib/cork-app-utils'
 import render from "./app-left-bar.tpl.js"
 import clone from "clone"
 
@@ -46,6 +47,8 @@ export default class AppLeftBar extends Mixin(LitElement)
 
     this.imageModeEnabled = false;
     this.gridModeEnabled = false;
+
+    EventBus.on('lightning-avg-update', e => this.avgLightningStrikes = Math.ceil(e.event_count/20));
 
     this._injectModel('SocketModel', 'AppStateModel', 'ImageModel');
   }

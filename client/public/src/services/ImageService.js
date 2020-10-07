@@ -43,6 +43,7 @@ class ImageService extends BaseService {
       throw new Error('Unknown apid to fetch metadata: '+args.apid);
     }
     
+    await this._wait(3000);
 
     let resp = await fetch(APP_CONFIG.dataServer.url + '/' +
       args.satellite + '/' +
@@ -68,6 +69,12 @@ class ImageService extends BaseService {
       console.error('Failed to get coverage', e);
     }
     return {error: true}
+  }
+
+  _wait(time=1000) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => resolve(), time);
+    });
   }
 
   _getCoordsFromMeta(xmlDoc, varname) {

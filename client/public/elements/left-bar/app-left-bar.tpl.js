@@ -51,7 +51,7 @@ ${sharedStyles}
 
 <div class="section">
   <h2>Natural Phenomena</h2>
-  <div>Lightning | Avg: ${this.avgLightningStrikes}</div>
+  <div>Lightning | Avg/Sec: ${this.avgLightningStrikes}</div>
 </div>
 
 <div class="section" style="border-bottom: none">

@@ -6,25 +6,29 @@ class MapStrikeRenderer {
     this.created = Date.now();
     this.strike = strike;
 
-    this.imageMode = 'boundary';
-    EventBus.on('app-state-update', e => {
-      this.imageMode = e.mode;
-    });
+    // this.imageMode = 'boundary';
+    // EventBus.on('app-state-update', e => {
+    //   this.imageMode = e.mode;
+    // });
   }
 
-  redraw(context, scaleFactor, now) {
-    if( this.imageMode !== 'boundary' && !this.imageMode.match(/fulldisk/) ) {
-      return;
-    }
+  redraw(context, mapView, now) {
+    // if( this.imageMode !== 'boundary' && !this.imageMode.match(/fulldisk/) ) {
+    //   return;
+    // }
 
     context.beginPath();
 
     let p = (now - this.created) / 30000;
     context.fillStyle = `rgba(255, 215, 0, ${1-p} )`;
 
+    let scaleFactor = mapView.zoom*2;
+
+    let x = mapView.offset.x + (this.strike.flash_x / scaleFactor);
+    let y = mapView.offset.y + (this.strike.flash_y / scaleFactor);
+
     context.arc(
-      this.strike.lon / scaleFactor, 
-      this.strike.lat / scaleFactor, 
+      x, y, 
       2, 0, 2 * Math.PI
     );
     context.fill();
@@ -37,8 +41,7 @@ class MapStrikeRenderer {
     context.strokeStyle = `rgba(255, 215, 0, ${1-p} )`;
     context.lineWidth = 2;
     context.arc(
-      this.strike.lon / scaleFactor, 
-      this.strike.lat / scaleFactor, 
+      x, y, 
       24*p, 0, 2 * Math.PI
     );
     context.stroke();

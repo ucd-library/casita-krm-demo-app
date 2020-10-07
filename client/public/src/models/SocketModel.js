@@ -18,6 +18,7 @@ class SocketModel extends BaseModel {
 
   _onAppStateUpdate(e) {
     this.service.setBand(e.band);
+    this.service.toggleLightning(e.lightningEnabled);
   }
 
 
