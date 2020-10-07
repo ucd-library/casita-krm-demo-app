@@ -23,7 +23,9 @@ export default class AppLeftBar extends Mixin(LitElement)
       labelModeEnabled : {type: Boolean},
       imageModeEnabled : {type: Boolean},
       band : {type: Number},
-      bands : {type: Array}
+      bands : {type: Array},
+      channel1Active : {type: Boolean},
+      channel2Active : {type: Boolean}
     }
   }
 
@@ -35,6 +37,9 @@ export default class AppLeftBar extends Mixin(LitElement)
     this.imageCaptureTimeStr = 'NA';
     this.imageCaptureToDevice = 'NA';
     this.avgLightningStrikes = 'NA';
+
+    this.channel1Active = false;
+    this.channel2Active = false;
 
     this.showLightning = false;
 
@@ -50,7 +55,9 @@ export default class AppLeftBar extends Mixin(LitElement)
 
     EventBus.on('lightning-avg-update', e => this.avgLightningStrikes = Math.ceil(e.event_count/20));
 
-    this._injectModel('SocketModel', 'AppStateModel', 'ImageModel');
+    this._injectModel('SocketModel', 'AppStateModel', 'ImageModel', 'ChannelStatusModel');
+
+    this.ChannelStatusModel.getChannelStatus();
   }
 
   _onAppStateUpdate(e) {
@@ -160,6 +167,14 @@ export default class AppLeftBar extends Mixin(LitElement)
 
   _onBandInfoClicked() {
     this.infoPopup.show(this.band);
+  }
+
+  _onChannelStatusUpdate(e) {
+    if( e.state !== 'loaded' ) return;
+
+    console.log(e);
+    this.channel1Active = e.payload['1'].status === 'up';
+    this.channel2Active = e.payload['2'].status === 'up';
   }
 
 }

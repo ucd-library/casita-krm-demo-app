@@ -41,7 +41,47 @@ ${sharedStyles}
   .band-displayed > div {
     flex: 1;
   }
+
+  .channel-status {
+    display: flex;
+    margin: 2px;
+  }
+  .channel-status iron-icon {
+    vertical-align: middle;
+  }
+  .channel-status .active {
+    color: var(--color-green);
+  }
+  .channel-status .down {
+    color: var(--color-rose);
+  }
 </style>  
+
+<div style="margin-bottom: 16px" ?hidden="${this.channel1Active && this.channel2Active}">
+  <h2>Receiver Status</h2>
+  <div class="channel-status">
+    <div>Channel 1:&nbsp;&nbsp;</div> 
+    <div>
+      <div class="label active" ?hidden="${!this.channel1Active}">
+        <iron-icon icon="swap-horiz"></iron-icon> Active
+      </div>
+      <div class="label down" ?hidden="${this.channel1Active}">
+        <iron-icon icon="error-outline"></iron-icon> Down
+      </div>
+    </div>
+  </div>
+  <div class="channel-status">
+    <div>Channel 2:&nbsp;&nbsp;</div> 
+    <div>
+      <div class="label active" ?hidden="${!this.channel2Active}">
+        <iron-icon icon="swap-horiz"></iron-icon> Active
+      </div>
+      <div class="label down" ?hidden="${this.channel2Active}">
+        <iron-icon icon="error-outline"></iron-icon> Down
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="section">
   <h2>Latest Capture</h2>
