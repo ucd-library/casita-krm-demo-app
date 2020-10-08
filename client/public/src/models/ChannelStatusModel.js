@@ -11,6 +11,8 @@ class ChannelStatusModel extends BaseModel {
     this.service = ChannelStatusService;
       
     this.register('ChannelStatusModel');
+
+    setInterval(() => this.getChannelStatus(), 1000 * 60 * 5);
   }
 
   async getChannelStatus() {
