@@ -15,7 +15,6 @@ class LightningModel extends BaseModel {
   }
 
   async onSocketMessage(msg) {
-    console.log(msg);
     if( !msg.subject.match(/\/(301\/stats.json|302\/payload\.json)$/) ) return;
 
     let parseUrl = new URL(msg.subject);

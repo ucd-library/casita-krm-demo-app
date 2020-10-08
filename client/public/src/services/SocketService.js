@@ -46,8 +46,8 @@ class SocketService extends BaseService {
     }
 
     this.subjectIds.bands = [
-      `file:///west/{scale}/{date}/{hour}/{minsec}/${band}/{apid}/blocks/{block}/web-scaled.png`,
-      `file:///west/mesocale/{date}/{hour}/{minsec}/${band}/{apid}/blocks/{block}/payload.bin`
+      `file:///west/{scale}/{date}/{hour}/{minsec}/${band}/{apid}/blocks/{block}/web-scaled.png`
+      // `file:///west/mesoscale/{date}/{hour}/{minsec}/${band}/{apid}/blocks/{block}/payload.bin`
     ]
     this.store.data.band = band;
 
@@ -61,8 +61,8 @@ class SocketService extends BaseService {
 
     if( enabled ) {
       this.subjectIds.lightning = [
-        `file:///west/lightning-detection-event-data/{date}/{hour}/{min-sec}/summary/301/stats.json`,
-        `file:///west/lightning-detection-flash-data/{date}/{hour}/{min-sec}/{ms}/302/payload.json`
+        `file:///west/lightning-detection-event-data/{date}/{hour}/{minsec}/summary/301/stats.json`,
+        `file:///west/lightning-detection-flash-data/{date}/{hour}/{minsec}/{ms}/302/payload.json`
       ]
     }
 

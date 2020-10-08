@@ -45,16 +45,34 @@ class ImageService extends BaseService {
     
     await this._wait(3000);
 
-    let resp = await fetch(APP_CONFIG.dataServer.url + '/' +
+    let url = APP_CONFIG.dataServer.url + '/' +
       args.satellite + '/' +
       args.scale + '/' +
       args.date + '/' +
       args.hour + '/' +
       args.minsec + '/' +
-      args.apid + '/payload.bin'
-    );
-    let xml = await resp.text();
-    let xmlDoc = this.xmlParser.parseFromString(xml,"text/xml");
+      args.apid + '/payload.bin';
+    let cached = this.store.data.mesoscaleMetaCache.find(item => item.url === url);
+    
+    if( cached ) {
+      if( cached.request ) await cached.request;
+    } else {
+      cached = {url};
+      this.store.data.mesoscaleMetaCache.unshift(cached);
+
+      cached.request = new Promise(async (resolve, reject) => {
+        let resp = await fetch(url);
+        cached.xml = await resp.text();
+        resolve();
+      });
+      await cached.request;
+      cached.request = null;
+
+      this.store.data.mesoscaleMetaCache = this.store.data.mesoscaleMetaCache.splice(0, 50);
+    }
+
+    let xmlDoc = this.xmlParser.parseFromString(cached.xml,"text/xml");
+
   
     // TODO: x and y coverage vary.
     try {

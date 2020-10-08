@@ -20,7 +20,8 @@ export default class AppCanvasMap extends Mixin(LitElement)
       canvasWidth : {type: Number},
       filters : {type: Array},
       histogram : {type: Object},
-      mapView : {type : Object}
+      mapView : {type : Object},
+      lowLight : {type: Object}
     }
   }
 
@@ -274,6 +275,8 @@ export default class AppCanvasMap extends Mixin(LitElement)
 
   _onAppStateUpdate(e) {
     this.appState = e;
+
+    this.lowLight = e.lowLight;
 
     if( this.band !== e.band ) {
       blockStore.destroy();

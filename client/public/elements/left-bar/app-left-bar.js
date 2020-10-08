@@ -38,8 +38,8 @@ export default class AppLeftBar extends Mixin(LitElement)
     this.imageCaptureToDevice = 'NA';
     this.avgLightningStrikes = 'NA';
 
-    this.channel1Active = false;
-    this.channel2Active = false;
+    this.channel1Active = true;
+    this.channel2Active = true;
 
     this.showLightning = false;
 
@@ -172,7 +172,6 @@ export default class AppLeftBar extends Mixin(LitElement)
   _onChannelStatusUpdate(e) {
     if( e.state !== 'loaded' ) return;
 
-    console.log(e);
     this.channel1Active = e.payload['1'].status === 'up';
     this.channel2Active = e.payload['2'].status === 'up';
   }

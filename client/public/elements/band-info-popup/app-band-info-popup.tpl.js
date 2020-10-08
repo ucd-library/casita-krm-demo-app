@@ -96,6 +96,30 @@ ${sharedStyles}
     flex: 1;
     width: 100%;
     box-sizing: border-box;
+    padding-left: 10px;
+
+    background:
+      linear-gradient(45deg, transparent 50%, var(--tcolor-secondary) 50%),
+      linear-gradient(135deg, var(--tcolor-secondary) 50%, transparent 50%);
+    background-position:
+      calc(100% - 21px) calc(1em + 2px),
+      calc(100% - 16px) calc(1em + 2px),
+      100% 0;
+    background-size:
+      5px 5px,
+      5px 5px,
+      2.5em 2.5em;
+    background-repeat: no-repeat;
+  }
+
+  button {
+    border: none;
+    background-color: var(--tcolor-secondary);
+    border-radius: 24px;
+  }
+
+  a:visited {
+    color: var(--color-gray70);
   }
 
   @media(max-width: 768px) {
@@ -118,7 +142,7 @@ ${sharedStyles}
       
       <div class="band">
         <div class="info-num">${this.metadata.band}</div>
-        <h1>${this.metadata.label} (${this.metadata.wavelength} µm) | ${this.metadata.type}</h1>
+        <h1>${this.metadata.label} (${this.metadata.wavelength} <span style="text-transform: initial;">&#956;m</span>) | ${this.metadata.type}</h1>
       </div>
 
       <p>${this.metadata.description}</p>

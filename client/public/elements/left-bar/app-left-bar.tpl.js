@@ -25,17 +25,49 @@ ${sharedStyles}
     margin-bottom: 16px;
   }
 
+  iron-icon[icon="image:flash-on"] {
+    width: 16px;
+    height: 16px;
+    border-radius: 20px;
+    padding: 2px;
+    vertical-align: middle;
+  }
+
+  iron-icon[icon="image:flash-on"][active] {
+    background: var(--tcolor-primary);
+  }
+
   .band-select select {
     height: 35px;
     background-color: var(--color-gray6);
     border: 1px solid var(--tcolor-secondary);
     color: var(--tcolor-primary);
     -webkit-appearance: none;
+    box-sizing: border-box;
+    width: 100%;
+    padding-left: 10px;
+
+    background:
+      linear-gradient(45deg, transparent 50%, var(--tcolor-secondary) 50%),
+      linear-gradient(135deg, var(--tcolor-secondary) 50%, transparent 50%);
+    background-position:
+      calc(100% - 21px) calc(1em + 2px),
+      calc(100% - 16px) calc(1em + 2px),
+      100% 0;
+    background-size:
+      5px 5px,
+      5px 5px,
+      2.5em 2.5em;
+    background-repeat: no-repeat;
   }
 
   .band-displayed {
     display: flex;
     align-items: center;
+  }
+
+  .band-displayed iron-icon {
+    color: var(--tcolor-text);
   }
 
   .band-displayed > div {
@@ -91,7 +123,10 @@ ${sharedStyles}
 
 <div class="section">
   <h2>Natural Phenomena</h2>
-  <div>Lightning | Avg/Sec: ${this.avgLightningStrikes}</div>
+  <div>
+    <iron-icon icon="image:flash-on" ?active="${this.avgLightningStrikes !== 'NA' && this.avgLightningStrikes !== 0}"></iron-icon> 
+    Lightning | Avg/Sec: ${this.avgLightningStrikes}
+  </div>
 </div>
 
 <div class="section" style="border-bottom: none">
@@ -116,7 +151,7 @@ ${sharedStyles}
 
   <h3 class="band-displayed">
     <div>Band Displayed</div>
-    <iron-icon icon="info" @click="${this._onBandInfoClicked}"></iron-icon>
+    <iron-icon icon="info-outline" @click="${this._onBandInfoClicked}"></iron-icon>
   </h3>
   <div class="band-select">
     <select .value="${this.band}" @change="${this._onBandSelectChange}">

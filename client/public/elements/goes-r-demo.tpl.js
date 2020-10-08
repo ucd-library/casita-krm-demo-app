@@ -57,7 +57,22 @@ ${sharedStyles}
   }
 
   button.nav[open] {
+    box-shadow: none;
     margin: 14px 0 0 14px;
+    padding: 0 15px 0 13px
+  }
+  button.nav[open] iron-icon {
+    vertical-align: middle;
+  }
+
+  button.nav[close] {
+    padding-right: 13px;
+  }
+
+  .low-light-msg {
+    position: absolute;
+    top: 18px;
+    right: 18px;
   }
 
   .nav-return-panel {
@@ -88,6 +103,9 @@ ${sharedStyles}
     .left-bar-container[open] {
       display: block;
     }
+    .low-light-msg {
+      display: none;
+    }
   }
 </style>  
 
@@ -97,7 +115,7 @@ ${sharedStyles}
     
     <div class="nav-panel">
       <button class="nav" open ?hidden="${this.showNav}" @click="${this._onNavClicked}">
-        <iron-icon icon="chevron-right"></iron-icon>
+        <iron-icon icon="dashboard"></iron-icon> Dashboard
       </button>
       <div class="nav-return-panel" ?hidden="${!this.showNav}" >
         <button class="nav" close @click="${this._onNavClicked}">
@@ -112,6 +130,10 @@ ${sharedStyles}
     
 
     <app-canvas-map id="canvas"></app-canvas-map>
+
+    <div ?hidden="${!this.lowLight}" class="low-light-msg">
+      Imagery may not be visible after sunset
+    </div>
   </div>
 </div>
 `;}

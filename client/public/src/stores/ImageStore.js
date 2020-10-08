@@ -16,7 +16,8 @@ class ImageStore extends BaseStore {
         max : 190,
         absMin : 5,
         absMax : 190
-      }
+      },
+      mesoscaleMetaCache : []
     };
     this.events = {
       BLOCK_UPDATE : 'block-update',

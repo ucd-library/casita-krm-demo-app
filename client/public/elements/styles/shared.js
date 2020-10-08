@@ -58,5 +58,13 @@ export default html`
     box-shadow: 0px 0px 6px 0px rgba(0,0,0,0.8);
     background-color: var(--color-gray20);
   }
+
+  .low-light-msg {
+    color: var(--color-gray20);
+    background-color: var(--tcolor-primary);
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 16px;
+  }
 </style>
 `;

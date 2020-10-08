@@ -6,6 +6,9 @@ import "../src"
 
 import "./styles/properties"
 
+import "@polymer/iron-icons"
+import "@polymer/iron-icons/image-icons"
+
 import "./left-bar/app-left-bar"
 import "./map/app-canvas-map"
 import "./layout/app-header"
@@ -16,7 +19,8 @@ export default class GoesRDemo extends Mixin(LitElement)
   static get properties() {
     return {
       products : {type: Array},
-      showNav : {type: Boolean}
+      showNav : {type: Boolean},
+      lowLight : {type: Boolean}
     }
   }
 
@@ -40,6 +44,11 @@ export default class GoesRDemo extends Mixin(LitElement)
         event.preventDefault(); 
       }
     }, { passive: false });
+
+  }
+
+  _onAppStateUpdate(e) {
+    this.lowLight = e.lowLight || false;
   }
 
   firstUpdated() {

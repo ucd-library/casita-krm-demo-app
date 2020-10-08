@@ -9,6 +9,9 @@ class AppStateModelImpl extends AppStateModel {
 
     // this.EventBus.on(this.store.events.APP_STATE_UPDATE, () => this._sendGA());
     // this._sendGA();
+
+    setInterval(() => this.setLowLightState(), 1000 * 60 * 15);
+    setTimeout(() => this.setLowLightState(), 500);
   }
 
 
@@ -16,10 +19,19 @@ class AppStateModelImpl extends AppStateModel {
     if( !state.band && !this.store.data.band ) {
       state.band = 7;
     }
-    // if( state.gridModeEnabled === undefined ) {
-    //   state.gridModeEnabled = true;
-    // }
+
     return super.set(state);
+  }
+
+  setLowLightState() {
+    let now = new Date();
+    let hour = now.getUTCHours();
+
+    let lowLight = false;
+    if( hour > 2 && hour < 14 ) lowLight = true;
+
+    if( this.store.data.lowLight === lowLight ) return;
+    this.set({lowLight});
   }
 
 }
