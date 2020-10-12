@@ -21,7 +21,7 @@ export default class AppCanvasMap extends Mixin(LitElement)
       filters : {type: Array},
       histogram : {type: Object},
       mapView : {type : Object},
-      lowLight : {type: Object}
+      lowLight : {type: Boolean}
     }
   }
 
@@ -48,6 +48,7 @@ export default class AppCanvasMap extends Mixin(LitElement)
     let {absMin, absMax} = this.ImageModel.getHistogram();
     this.absMin = absMin;
     this.absMax = absMax;
+    this.lowLight = false;
 
     this.imageMode = 'imagery';
 
@@ -275,7 +276,8 @@ export default class AppCanvasMap extends Mixin(LitElement)
   _onAppStateUpdate(e) {
     this.appState = e;
 
-    this.lowLight = e.lowLight;
+    this.lowLight = e.lowLight || false;
+    console.log(this.lowLight);
 
     if( this.band !== e.band ) {
       blockStore.destroy();

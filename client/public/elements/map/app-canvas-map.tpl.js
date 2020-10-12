@@ -54,6 +54,10 @@ ${sharedStyles}
     height: 50px;
   }
 
+  [hidden] {
+    display: none !important;
+  }
+
   @media(max-width: 800px) {
     .top-mobile, .top-mobile-grad, .bottom-mobile-grad {
       display: block;

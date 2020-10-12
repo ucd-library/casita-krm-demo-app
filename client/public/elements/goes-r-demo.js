@@ -38,6 +38,9 @@ export default class GoesRDemo extends Mixin(LitElement)
       lightningEnabled : true
     });
 
+    // this.prevented = 0;
+    // this.total = 0;
+
     // ios hack
     document.addEventListener('touchmove', function (event) {
       if ( event.scale !== undefined && event.scale !== 1 ) {
@@ -53,6 +56,7 @@ export default class GoesRDemo extends Mixin(LitElement)
 
   firstUpdated() {
     this.canvas = this.shadowRoot.querySelector('app-canvas-map');
+    // this.debug = this.shadowRoot.querySelector('#debug');
   }
 
   _onBlockUpdate(e) {

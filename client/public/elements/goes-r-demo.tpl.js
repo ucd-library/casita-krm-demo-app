@@ -107,8 +107,20 @@ ${sharedStyles}
       display: none;
     }
   }
+
+  [mobile-debug] {
+    position: absolute;
+    top : 0;
+    left: 0;
+    right: 0;
+    background: black;
+    color: white;
+    z-index: 10000;
+  }
+
 </style>  
 
+<!-- <div mobile-debug id="debug"></div> -->
 <div class="layout">
   <app-header></app-header>
   <div class="main">

@@ -75,7 +75,7 @@ export default class AppLeftBar extends Mixin(LitElement)
     let hour = e.date.getHours();
     let meridiem = 'am';
     if( hour >= 12 ) {
-      hour = hour-12;
+      if( hour > 12 ) hour = hour-12;
       meridiem = 'pm'
     }
 
