@@ -74,7 +74,7 @@ export default class AppLeftBar extends Mixin(LitElement)
   _onLatestImageCaptureTimeUpdate(e) {
     let hour = e.date.getHours();
     let meridiem = 'am';
-    if( hour > 12 ) {
+    if( hour >= 12 ) {
       hour = hour-12;
       meridiem = 'pm'
     }
@@ -82,7 +82,7 @@ export default class AppLeftBar extends Mixin(LitElement)
     let month = this._formatDT(e.date.getMonth()+1);
     let date = this._formatDT(e.date.getDate());
     let min = this._formatDT(e.date.getMinutes());
-    let sec = this._formatDT(e.date.getMinutes());
+    let sec = this._formatDT(e.date.getSeconds());
 
     this.imageCaptureTimeStr = e.date.getFullYear()+'-'+month+'-'+date + ', ' + 
       hour+':'+min+':'+sec+meridiem;
@@ -140,17 +140,17 @@ export default class AppLeftBar extends Mixin(LitElement)
     this.AppStateModel.set({labelModeEnabled: enabled});
   }
 
-  _onImageBoundaryUpdate(e) {
-    if( !this.imageCaptureTime ) {
-      this.imageCaptureTime = e.payload.localTime;
-    } else if( this.imageCaptureTime.getTime() < e.payload.localTime.getTime() ) {
-      this.imageCaptureTime = e.payload.localTime;
-    }
-    this.imageCaptureTimeStr = this.imageCaptureTime.toISOString();
-    this.imageCaptureToDevice = Math.floor((Date.now() - this.imageCaptureTime.getTime()) / 1000)
+  // _onImageBoundaryUpdate(e) {
+  //   if( !this.imageCaptureTime ) {
+  //     this.imageCaptureTime = e.payload.localTime;
+  //   } else if( this.imageCaptureTime.getTime() < e.payload.localTime.getTime() ) {
+  //     this.imageCaptureTime = e.payload.localTime;
+  //   }
+  //   this.imageCaptureTimeStr = this.imageCaptureTime.toISOString();
+  //   this.imageCaptureToDevice = Math.floor((Date.now() - this.imageCaptureTime.getTime()) / 1000)
   
-    this._renderSelectedBlockGroups();
-  }
+  //   this._renderSelectedBlockGroups();
+  // }
 
   _onLightningStrikeCountUpdate(e) {
     if( this.totalLightningStrikes === 0 ) {

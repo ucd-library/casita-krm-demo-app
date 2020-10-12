@@ -62,7 +62,6 @@ export default class AppCanvasMap extends Mixin(LitElement)
     this.data = {};
 
     this.rebalanceImgColorTimer = -1;
-    this.unhandledResize = false;
 
     let styles = getComputedStyle(document.documentElement);
     this.backgroundColor = styles.getPropertyValue('--tcolor-bg');
@@ -264,12 +263,12 @@ export default class AppCanvasMap extends Mixin(LitElement)
     if( w > 768 ) this.infoOpen = false;
     else if( w < 768 ) this.infoOpen = true;
 
-    this.unhandledResize = true;
-
     if( this.resizeTimer ) clearTimeout(this.resizeTimer);
     this.resizeTimer = setTimeout(() => {
       this.resizeTimer = null;
+      this.clearBalancedCanvas();
       this.redrawImgBlocks();
+      this.redrawRasterMask();
     }, 100);
   }
 
@@ -432,7 +431,6 @@ export default class AppCanvasMap extends Mixin(LitElement)
     this.ImageModel.setHistogramData(e.data.histogram, e.data.min, e.data.max);
 
     this._setBalancedData(e.data);
-    this.redrawRasterMask();
   }
 
   async _setBalancedData(e) {
@@ -444,7 +442,7 @@ export default class AppCanvasMap extends Mixin(LitElement)
       let resp = await block.setBalancedData(e.min, e.max, this.balancedContext);
       if( resp !== false) c++;
     }
-    console.log('Block count requiring update after balance: '+c, ((c/blocks.length)*100)+'%', e.min, e.max);
+    // console.log('Block count requiring update after balance: '+c, ((c/blocks.length)*100)+'%', e.min, e.max);
 
     this.redrawRasterMask();
   }
@@ -459,15 +457,14 @@ export default class AppCanvasMap extends Mixin(LitElement)
 
   
   redrawRasterMask() {
-
     try {
-      this.rasterMaskContext.beginPath();
-
       this.rasterMaskContext.clearRect(
         0, 0,
         this.canvasWidth,
         this.canvasHeight
       );
+
+      this.rasterMaskContext.beginPath();
       this.rasterMaskContext.rect(
         0, 0,
         this.canvasWidth,

@@ -34,7 +34,7 @@ export default class GoesRDemo extends Mixin(LitElement)
 
     this._injectModel('AppStateModel', 'SocketModel', 'ImageModel');
     this.AppStateModel.set({
-      band : 1,
+      band : 2,
       lightningEnabled : true
     });
 
