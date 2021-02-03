@@ -277,7 +277,6 @@ export default class AppCanvasMap extends Mixin(LitElement)
     this.appState = e;
 
     this.lowLight = e.lowLight || false;
-    console.log(this.lowLight);
 
     if( this.band !== e.band ) {
       blockStore.destroy();

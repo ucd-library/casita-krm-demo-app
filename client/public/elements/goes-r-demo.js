@@ -38,11 +38,8 @@ export default class GoesRDemo extends Mixin(LitElement)
       lightningEnabled : true
     });
 
-    // this.prevented = 0;
-    // this.total = 0;
-
     // ios hack
-    document.addEventListener('touchmove', function (event) {
+    window.addEventListener('touchmove',  (event) => {
       if ( event.scale !== undefined && event.scale !== 1 ) {
         event.preventDefault(); 
       }
@@ -57,6 +54,10 @@ export default class GoesRDemo extends Mixin(LitElement)
   firstUpdated() {
     this.canvas = this.shadowRoot.querySelector('app-canvas-map');
     // this.debug = this.shadowRoot.querySelector('#debug');
+    // this.debug.innerHTML=JSON.stringify({
+    //   v:this.v,
+    //   total:0
+    // }, '  ', '  ');
   }
 
   _onBlockUpdate(e) {
@@ -64,10 +65,10 @@ export default class GoesRDemo extends Mixin(LitElement)
     this.canvas.addBlock(e.payload);
   }
 
-  _onLightningEventsUpdate(e) {
-    if( !this.canvas ) return;
-    this.canvas.setLightning(e);
-  }
+  // _onLightningEventsUpdate(e) {
+  //   if( !this.canvas ) return;
+  //   this.canvas.setLightning(e);
+  // }
 
   _onNavClicked(e) {
     this.showNav = e.currentTarget.hasAttribute('open') ? true : false;

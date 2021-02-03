@@ -19,17 +19,21 @@ class MapStrikeRenderer {
 
     context.beginPath();
 
-    let p = (now - this.created) / 30000;
+    let p = (now - this.created) / 60000;
     context.fillStyle = `rgba(255, 215, 0, ${1-p} )`;
 
     let scaleFactor = mapView.zoom*2;
+
+    let energy = this.strike.flash_energy / 500;
+    if( energy > 1 ) energy = 1;
+    if( energy < .25 ) energy = 0.25;
 
     let x = mapView.offset.x + (this.strike.flash_x / scaleFactor);
     let y = mapView.offset.y + (this.strike.flash_y / scaleFactor);
 
     context.arc(
       x, y, 
-      2, 0, 2 * Math.PI
+      3*energy, 0, 2 * Math.PI
     );
     context.fill();
 
@@ -42,7 +46,7 @@ class MapStrikeRenderer {
     context.lineWidth = 2;
     context.arc(
       x, y, 
-      24*p, 0, 2 * Math.PI
+      28*p*energy, 0, 2 * Math.PI
     );
     context.stroke();
   }

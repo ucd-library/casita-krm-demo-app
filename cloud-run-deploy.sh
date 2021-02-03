@@ -2,10 +2,13 @@
 
 set -e
 
-PROJECT_ID=digital-ucdavis-edu
+# PROJECT_ID=digital-ucdavis-edu
+PROJECT_ID=casita-298223
 CONTAINER_NAME=casita-krm-demo-app
 DEPLOYMENT_NAME=casita-krm-demo-app
 IMAGE=gcr.io/$PROJECT_ID/$CONTAINER_NAME
+
+gcloud config set project $PROJECT_ID
 
 gcloud builds submit --tag $IMAGE
 
