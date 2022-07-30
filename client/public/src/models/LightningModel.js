@@ -15,16 +15,14 @@ class LightningModel extends BaseModel {
   }
 
   async onSocketMessage(msg) {
-    if( !msg.subject.match(/\/(301\/stats.json|302\/payload\.json)$/) ) return;
+    if( msg.topic !== 'lightning' ) return;
+    msg = msg.message.data;
 
-    let parseUrl = new URL(msg.subject);
-    let [satellite, scale, date, hour, minsec, ms, apid, file] = parseUrl.pathname.replace(/^\//, '').split('/');
-
-    if( apid === '301' ) {
-      let summary = await this.service.fetchLightningSummary(parseUrl.pathname);
+    if( msg.apid === '301' ) {
+      let summary = await this.service.fetchLightningSummary(msg.files[0]);
       this.EventBus.emit('lightning-avg-update', summary);
-    } else if( apid === '302' ) {
-      let e = await this.service.fetchLightningSummary(parseUrl.pathname);
+    } else if( msg.apid === '302' ) {
+      let e = await this.service.fetchLightningSummary(msg.files[0]);
       this.EventBus.emit('lightning-flash-update', e);
     }
   }

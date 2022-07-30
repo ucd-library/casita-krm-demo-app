@@ -13,8 +13,8 @@ class SocketStore extends BaseStore {
     };
     this.events = {
       IMAGE_BOUNDARY_UPDATE : 'image-boundary-update',
-      LIGHTINING_EVENTS_UPDATE : 'lightning-events-update',
-      LIGHTINING_STRIKE_COUNT_UPDATE : 'lightning-strike-count-update'
+      LIGHTINING_EVENTS_UPDATE : 'lightning-events-update'
+      // LIGHTINING_STRIKE_COUNT_UPDATE : 'lightning-strike-count-update'
     };
   }
 
@@ -39,10 +39,10 @@ class SocketStore extends BaseStore {
     this.emit(this.events.LIGHTINING_EVENTS_UPDATE, this.data.lightening);
   }
 
-  onLightningCountLoad(data) {
-    this.data.strikeCount = data.data;
-    this.emit(this.events.LIGHTINING_STRIKE_COUNT_UPDATE, this.data.strikeCount);
-  }
+  // onLightningCountLoad(data) {
+  //   this.data.strikeCount = data.data;
+  //   this.emit(this.events.LIGHTINING_STRIKE_COUNT_UPDATE, this.data.strikeCount);
+  // }
 
 }
 

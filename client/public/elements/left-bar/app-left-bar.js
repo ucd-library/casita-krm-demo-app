@@ -53,7 +53,21 @@ export default class AppLeftBar extends Mixin(LitElement)
     this.imageModeEnabled = false;
     this.gridModeEnabled = false;
 
-    EventBus.on('lightning-avg-update', e => this.avgLightningStrikes = Math.ceil(e.event_count/20));
+    let resetAverageToZero = null;
+
+    EventBus.on('lightning-avg-update', e => {
+      if( resetAverageToZero ) clearTimeout(resetAverageToZero);
+
+      let time = e[e.length-1].event_time_offset - e[0].event_time_offset;
+      if( time <= 0 ) time = 3;
+      this.avgLightningStrikes = Math.ceil(e.length/time);
+
+
+      resetAverageToZero = setTimeout(() => {
+        resetAverageToZero = null;
+        this.avgLightningStrikes = 0;
+      }, 10000);
+    });
 
     this._injectModel('SocketModel', 'AppStateModel', 'ImageModel', 'ChannelStatusModel');
 
@@ -152,17 +166,18 @@ export default class AppLeftBar extends Mixin(LitElement)
   //   this._renderSelectedBlockGroups();
   // }
 
-  _onLightningStrikeCountUpdate(e) {
-    if( this.totalLightningStrikes === 0 ) {
-      this.totalLightningStrikes = e;
-      this.lightningStrikeStartTime = Date.now();
-      return;
-    }
-    this.totalLightningStrikes += e;
+  // _onLightningStrikeCountUpdate(e) {
+  //   debugger;
+  //   if( this.totalLightningStrikes === 0 ) {
+  //     this.totalLightningStrikes = e;
+  //     this.lightningStrikeStartTime = Date.now();
+  //     return;
+  //   }
+  //   this.totalLightningStrikes += e;
 
-    let avg = this.totalLightningStrikes / ((Date.now() - this.lightningStrikeStartTime) / 1000);
-    this.avgLightningStrikes = Math.round(avg)+' strikes/sec';
-  }
+  //   let avg = this.totalLightningStrikes / ((Date.now() - this.lightningStrikeStartTime) / 1000);
+  //   this.avgLightningStrikes = Math.round(avg)+' strikes/sec';
+  // }
 
 
   _onBandInfoClicked() {

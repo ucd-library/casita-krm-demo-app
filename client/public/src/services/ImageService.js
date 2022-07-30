@@ -47,7 +47,7 @@ class ImageService extends BaseService {
 
     let url = APP_CONFIG.dataServer.url + '/' +
       args.satellite + '/' +
-      args.scale + '/' +
+      args.product + '/' +
       args.date + '/' +
       args.hour + '/' +
       args.minsec + '/' +

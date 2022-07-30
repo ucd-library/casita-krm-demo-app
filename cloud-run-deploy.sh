@@ -17,3 +17,5 @@ gcloud beta run deploy $DEPLOYMENT_NAME \
   --platform managed \
   --memory=1Gi \
   --set-env-vars=APP_ENV=prod
+
+# gcloud beta run domain-mappings describe --domain casita.library.ucdavis.edu --platform managed --region us-central1

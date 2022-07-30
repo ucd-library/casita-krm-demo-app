@@ -36,17 +36,16 @@ class ImageModel extends BaseModel {
   }
 
   async onSocketMessage(msg) {
-    if( msg.subject.match(/\/payload.bin$/) ) {
-      console.log(msg);
-    }
+    if( msg.topic !== 'block-composite-image' ) return;
+    msg = msg.message;
 
-    if( !msg.subject.match(/\.png$/) ) return;
+    let file = msg.data.files.find(file => file.match(/\/web-scaled.png$/));
 
-    let parseUrl = new URL(msg.subject);
-    let [satellite, scale, date, hour, minsec, band, apid, blockDir, block] = parseUrl.pathname.replace(/^\//, '').split('/');
+    // let parseUrl = new URL(msg.subject);
+    // let [satellite, scale, date, hour, minsec, band, apid, blockDir, block] = parseUrl.pathname.replace(/^\//, '').split('/');
 
-    let url = APP_CONFIG.dataServer.url + parseUrl.pathname;
-    let resolution = APP_CONFIG.bandCharacteristics[parseInt(band)].resolution;
+    let url = APP_CONFIG.dataServer.url + file;
+    let resolution = APP_CONFIG.bandCharacteristics[parseInt(msg.data.band)].resolution;
 
     // APP_CONFIG.imageScaleFactor is a factor set on the server, how much it scales the web_scaled images.
     let initImageScale = (APP_CONFIG.imageScaleFactor / resolution);
@@ -64,24 +63,24 @@ class ImageModel extends BaseModel {
       img.height = img.height * initImageScale;
     }
 
-    let [year, month, day] = date.split('-').map(v => parseInt(v));
-    let [min, sec] = minsec.split('-').map(v => parseInt(v));
-    let datetime = new Date(year, month-1, day, parseInt(hour), min, sec, 0);
-    datetime = new Date(datetime.getTime() - (new Date().getTimezoneOffset()*60*1000))
+    let datetime = new Date(msg.data.datetime);
+    // datetime = new Date(datetime.getTime() - (new Date().getTimezoneOffset()*60*1000))
     this.store.setLatestCaptureTime(datetime, Date.now() - datetime.getTime());
 
-    let [x, y] = block.split('-').map(v => parseInt(v));
+    // let [x, y] = block.split('-').map(v => parseInt(v));
     // console.log('scale factor='+APP_CONFIG.imageScaleFactor, 'resolution='+resolution, 'initImageScale='+initImageScale);
 
     // if( resolution === 1 ) resolution = 2;
+    let x = msg.data.x;
+    let y = msg.data.y;
 
-    block = {
-      satellite,
-      scale,
-      date,
-      time : hour+':'+minsec.replace('-', ':'),
-      apid,
-      band : parseInt(band),
+    let block = {
+      satellite : msg.data.satellite,
+      scale : msg.data.product,
+      date : msg.data.date,
+      time : msg.data.hour+':'+msg.data.minsec.replace('-', ':'),
+      apid : msg.data.apid,
+      band : parseInt(msg.data.band),
       location : {
         original : {
           tl : [x, y],
@@ -100,8 +99,8 @@ class ImageModel extends BaseModel {
         // },
         scaled : {
           tl : [
-            x * resolution,
-            y * resolution
+            msg.data.x * resolution,
+            msg.data.y * resolution
           ],
           height : img.height * APP_CONFIG.imageScaleFactor,
           width : img.width * APP_CONFIG.imageScaleFactor,
@@ -112,7 +111,7 @@ class ImageModel extends BaseModel {
       img
     }
 
-    if( scale === 'conus' ) {
+    if( msg.data.product === 'conus' ) {
       let halfFdx = APP_CONFIG.coverage.fulldisk.x/2;
       let halfFdy = APP_CONFIG.coverage.fulldisk.y/2;
       let halfCx = APP_CONFIG.coverage.conus.x/2;
@@ -129,10 +128,8 @@ class ImageModel extends BaseModel {
       block.location.scaled.offset = [x * resolution, (y * resolution) + FULLDISK_FUDGE_FACTOR];
     }
 
-    if( scale === 'mesoscale' ) {
-      let {error, top, left} = await this.service.getMesoscaleCoord({
-        satellite, scale, date, hour, minsec, band, apid
-      });
+    if( msg.data.product === 'mesoscale' ) {
+      let {error, top, left} = await this.service.getMesoscaleCoord(msg.data);
       if( error ) return;
 
       block.location.original.offset = [left, top];

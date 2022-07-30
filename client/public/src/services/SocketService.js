@@ -1,6 +1,6 @@
 const {BaseService, EventBus} = require('@ucd-lib/cork-app-utils');
 const SocketStore = require('../stores/SocketStore');
-const io = require('socket.io-client');
+const {io} = require('socket.io-client');
 const apidUtils = require("@ucd-lib/goes-r-packet-decoder/lib/utils/apid");
 
 class SocketService extends BaseService {
@@ -12,7 +12,8 @@ class SocketService extends BaseService {
     this.imageModeEnabled = '';
 
     this.io = io(APP_CONFIG.dataServer.url, {
-      path : APP_CONFIG.dataServer.wsPath
+      path : APP_CONFIG.dataServer.wsPath,
+      withCredentials: false
     });
 
     this.subjectIds = {
@@ -40,15 +41,11 @@ class SocketService extends BaseService {
       return;
     }
 
-    if( this.subjectIds.bands.length && this.connected ) {
-      console.log('Unlistening to: ', this.subjectIds.bands);
-      this.io.emit('unlisten', JSON.stringify(this.subjectIds.bands));
-    }
+    // if( this.subjectIds.bands.length && this.connected ) {
+    //   console.log('Unlistening to: ', this.subjectIds.bands);
+    //   this.io.emit('unlisten', JSON.stringify(this.subjectIds.bands));
+    // }
 
-    this.subjectIds.bands = [
-      `file:///west/{scale}/{date}/{hour}/{minsec}/${band}/{apid}/blocks/{block}/web-scaled.png`
-      // `file:///west/mesoscale/{date}/{hour}/{minsec}/${band}/{apid}/blocks/{block}/payload.bin`
-    ]
     this.store.data.band = band;
 
     if( this.connected ) {
@@ -57,23 +54,27 @@ class SocketService extends BaseService {
   }
 
   toggleLightning(enabled=true) {
-    if( !enabled ) enabled = false;
-
-    if( enabled ) {
-      this.subjectIds.lightning = [
-        `file:///west/lightning-detection-event-data/{date}/{hour}/{minsec}/summary/301/stats.json`,
-        `file:///west/lightning-detection-flash-data/{date}/{hour}/{minsec}/{ms}/302/payload.json`
-      ]
-    }
-
+    this.lightningEnabled = enabled ? true : false;
     if( !this.connected ) return;
+    this._listen();
 
-    if( enabled ) {
-      this._listen(this.subjectIds.lightning)
-    } else if( this.subjectIds.lightning.length ) {
-      this.io.emit('unlisten', JSON.stringify(this.subjectIds.lightning));
-      this.subjectIds.lightning = [];
-    }
+    // if( !enabled ) enabled = false;
+
+    // if( enabled ) {
+    //   this.subjectIds.lightning = [
+    //     `file:///west/lightning-detection-event-data/{date}/{hour}/{minsec}/summary/301/stats.json`,
+    //     `file:///west/lightning-detection-flash-data/{date}/{hour}/{minsec}/{ms}/302/payload.json`
+    //   ]
+    // }
+
+    // if( !this.connected ) return;
+
+    // if( enabled ) {
+    //   this._listen(this.subjectIds.lightning)
+    // } else if( this.subjectIds.lightning.length ) {
+    //   // this.io.emit('unlisten', JSON.stringify(this.subjectIds.lightning));
+    //   this.subjectIds.lightning = [];
+    // }
   }
 
   onConnect() {
@@ -81,20 +82,30 @@ class SocketService extends BaseService {
     this.connected = true;
 
     // make sure we reconnect 
-    if( this.subjectIds.bands.length ) {
-      this._listen(this.subjectIds.bands)
+    if( this.store.data.band ) {
+      this._listen()
     }
-    if( this.subjectIds.lightning.length ) {
-     this._listen(this.subjectIds.lightning)
-    }
+    // if( this.subjectIds.lightning.length ) {
+    //  this._listen(this.subjectIds.lightning)
+    // }
   }
 
-  _listen(subjects) {
+  _listen() {
     if( subject.length === 0 ) return;
-    console.log('listening to: ', subjects);
-    this.io.emit('listen', JSON.stringify(
-      subjects.map(subject => ({subject}))
-    ));
+    console.log('listening to: ', this.store.data.band);
+
+    let filters = [{
+      topic : 'block-composite-image',
+      key : 'data.band',
+      regex : '^'+this.store.data.band+'$'
+    }];
+    if( this.lightningEnabled ) {
+      filters.push({
+        topic : 'lightning'
+      });
+    }
+
+    this.io.emit('listen', {filters});
   }
 
   onDisconnect() {
@@ -102,18 +113,18 @@ class SocketService extends BaseService {
     console.warn('disconnected to socket');
   }
 
-  join(room) {
-    if( !this.registerListeners[room] ) {
-      this.registerListeners[room] = true;
-      this.io.on(room, data => this.onImageBoundary(room, data));
-    }
+  // join(room) {
+  //   if( !this.registerListeners[room] ) {
+  //     this.registerListeners[room] = true;
+  //     this.io.on(room, data => this.onImageBoundary(room, data));
+  //   }
 
-    this.io.emit('join', room);
-  }
+  //   this.io.emit('join', room);
+  // }
 
-  loadCache(room) {
-    this.io.emit('load-cache', room);
-  }
+  // loadCache(room) {
+  //   this.io.emit('load-cache', room);
+  // }
 
   onLightningStrikeCount(data) {
     this.store.onLightningCountLoad(data);
