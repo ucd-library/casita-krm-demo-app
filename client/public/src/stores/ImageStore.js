@@ -46,12 +46,12 @@ class ImageStore extends BaseStore {
     this.emit(this.events.HISTOGRAM_UPDATE, this.data.histogram);
   }
 
-  setLatestCaptureTime(date, ttd) {
-    if( this.data.latestCaptureTime.date  && 
-      date.getTime() < this.data.latestCaptureTime.date.getTime() ) {
-      return;
-    }
-    this.data.latestCaptureTime = {date, ttd};
+  setLatestCaptureTime(product, date, ttd) {
+    // if( this.data.latestCaptureTime.date  && 
+    //   date.getTime() < this.data.latestCaptureTime.date.getTime() ) {
+    //   return;
+    // }
+    this.data.latestCaptureTime = {product, date, ttd};
     this.emit(this.events.LATEST_CAPTURE_TIME_UPDATE, this.data.latestCaptureTime);
   }
 

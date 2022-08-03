@@ -18,6 +18,7 @@ export default class AppLeftBar extends Mixin(LitElement)
       imageCaptureTime : {type: Date},
       imageCaptureTimeStr : {type: String},
       imageCaptureToDevice : {type: String},
+      imageCaptureProduct : {type: String},
       selectedBlockGroups : {type: Array},
       gridModeEnabled : {type: Boolean},
       labelModeEnabled : {type: Boolean},
@@ -55,13 +56,19 @@ export default class AppLeftBar extends Mixin(LitElement)
 
     let resetAverageToZero = null;
 
+    let lightningWindow = [0, 0, 0, 0, 0];
+    let lightningWindowIndex = 0;
+
     EventBus.on('lightning-avg-update', e => {
       if( resetAverageToZero ) clearTimeout(resetAverageToZero);
 
-      let time = e[e.length-1].event_time_offset - e[0].event_time_offset;
+      let time = Math.abs(Math.abs(e[e.length-1].event_time_offset) - Math.abs(e[0].event_time_offset)) / 1000;
       if( time <= 0 ) time = 3;
-      this.avgLightningStrikes = Math.ceil(e.length/time);
+      
+      lightningWindow[lightningWindowIndex%lightningWindow.length] = Math.ceil(e.length/time);
+      lightningWindowIndex++;
 
+      this.avgLightningStrikes = Math.round(lightningWindow.reduce((partialSum, a) => partialSum + a, 0) / lightningWindow.length);
 
       resetAverageToZero = setTimeout(() => {
         resetAverageToZero = null;
@@ -98,6 +105,7 @@ export default class AppLeftBar extends Mixin(LitElement)
     let min = this._formatDT(e.date.getMinutes());
     let sec = this._formatDT(e.date.getSeconds());
 
+    this.imageCaptureProduct = e.product;
     this.imageCaptureTimeStr = e.date.getFullYear()+'-'+month+'-'+date + ', ' + 
       hour+':'+min+':'+sec+meridiem;
     this.imageCaptureToDevice = Math.floor(e.ttd/1000)+'s';
@@ -152,6 +160,10 @@ export default class AppLeftBar extends Mixin(LitElement)
   _onLabelModeClicked(e) {
     let enabled = e.currentTarget.checked;
     this.AppStateModel.set({labelModeEnabled: enabled});
+  }
+
+  _onHighResClick() {
+    this.ImageModel.setHiRes(!this.ImageModel.hiRes);
   }
 
   // _onImageBoundaryUpdate(e) {

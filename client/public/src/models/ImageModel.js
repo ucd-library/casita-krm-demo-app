@@ -18,8 +18,14 @@ class ImageModel extends BaseModel {
       
     this.register('ImageModel');
 
+    this.hiRes = false;
+
     this.EventBus.on('socket-message', msg => this.onSocketMessage(msg));
     this.EventBus.on('app-state-update', e => this._onAppStateUpdate(e));
+  }
+
+  setHiRes(hiRes) {
+    this.hiRes = hiRes;
   }
 
   async _onAppStateUpdate(e) {
@@ -39,16 +45,19 @@ class ImageModel extends BaseModel {
     if( msg.topic !== 'block-composite-image' ) return;
     msg = msg.message;
 
-    let file = msg.data.files.find(file => file.match(/\/web-scaled.png$/));
-
-    // let parseUrl = new URL(msg.subject);
-    // let [satellite, scale, date, hour, minsec, band, apid, blockDir, block] = parseUrl.pathname.replace(/^\//, '').split('/');
-
-    let url = APP_CONFIG.dataServer.url + file;
+    // APP_CONFIG.imageScaleFactor is a factor set on the server, how much it scales the web_scaled images.
+    let imageRe = /\/web-scaled.png$/;
+    let scaleFactor = APP_CONFIG.imageScaleFactor;
     let resolution = APP_CONFIG.bandCharacteristics[parseInt(msg.data.band)].resolution;
 
-    // APP_CONFIG.imageScaleFactor is a factor set on the server, how much it scales the web_scaled images.
-    let initImageScale = (APP_CONFIG.imageScaleFactor / resolution);
+    if( this.hiRes ) {
+      scaleFactor = resolution;
+      imageRe = /\/web.png$/;
+    }
+
+    let file = msg.data.files.find(file => file.match(imageRe));
+    let url = APP_CONFIG.dataServer.url + file;
+    let initImageScale = (scaleFactor / resolution);
 
     let img = null;
     if( this.imageMode === 'imagery' ) {
@@ -65,7 +74,7 @@ class ImageModel extends BaseModel {
 
     let datetime = new Date(msg.data.datetime);
     // datetime = new Date(datetime.getTime() - (new Date().getTimezoneOffset()*60*1000))
-    this.store.setLatestCaptureTime(datetime, Date.now() - datetime.getTime());
+    this.store.setLatestCaptureTime(msg.data.product, datetime, Date.now() - datetime.getTime());
 
     // let [x, y] = block.split('-').map(v => parseInt(v));
     // console.log('scale factor='+APP_CONFIG.imageScaleFactor, 'resolution='+resolution, 'initImageScale='+initImageScale);
@@ -102,8 +111,8 @@ class ImageModel extends BaseModel {
             msg.data.x * resolution,
             msg.data.y * resolution
           ],
-          height : img.height * APP_CONFIG.imageScaleFactor,
-          width : img.width * APP_CONFIG.imageScaleFactor,
+          height : img.height * scaleFactor,
+          width : img.width * scaleFactor,
           offset : [0, 0]
         }
       },

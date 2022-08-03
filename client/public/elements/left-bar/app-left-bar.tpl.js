@@ -117,6 +117,7 @@ ${sharedStyles}
 
 <div class="section">
   <h2>Latest Capture</h2>
+  <div>${this.imageCaptureProduct}</div>
   <div>${this.imageCaptureTimeStr}</div>
   <div>Time to Device: ${this.imageCaptureToDevice}</div>
 </div>
@@ -159,6 +160,13 @@ ${sharedStyles}
         <option value="${item.band}">Band ${item.band}: ${item.label} ${item.type}</option>
       `)}
     </select>
+  </div>
+
+  <div style="margin-bottom: 15px">
+    <input id="hires" type="checkbox" @click="${this._onHighResClick}" /> 
+    <label for="hires">Display full resolution images.  Warning
+      this will greatly increase bandwidth used.
+    </label>
   </div>
 
   <div ?hidden="${!this.imageModeEnabled}">
