@@ -59,11 +59,11 @@ export default class AppLeftBar extends Mixin(LitElement)
     let lightningWindow = [0, 0, 0, 0, 0];
     let lightningWindowIndex = 0;
 
-    EventBus.on('lightning-avg-update', e => {
+    EventBus.on('lightning-flash-update', e => {
       if( resetAverageToZero ) clearTimeout(resetAverageToZero);
 
-      let time = Math.abs(Math.abs(e[e.length-1].event_time_offset) - Math.abs(e[0].event_time_offset)) / 1000;
-      if( time <= 0 ) time = 3;
+      let time = Math.abs(Math.abs(e[e.length-1].flash_time_offset_of_last_event) - Math.abs(e[0].flash_time_offset_of_first_event)) / 1000;
+      if( time <= 0 ) time = 1;
       
       lightningWindow[lightningWindowIndex%lightningWindow.length] = Math.ceil(e.length/time);
       lightningWindowIndex++;

@@ -20,8 +20,9 @@ class LightningModel extends BaseModel {
 
     if( msg.apid === '301' ) {
       // let summary = await this.service.fetchLightningSummary(msg.files[0]);
-      this.EventBus.emit('lightning-avg-update', msg.payload);
-    } else if( msg.apid === '302' ) {
+      this.EventBus.emit('lightning-event-update', msg.payload);
+    } 
+    else if( msg.apid === '302' ) {
       // let e = await this.service.fetchLightningSummary(msg.files[0]);
       this.EventBus.emit('lightning-flash-update', msg.payload);
     }
