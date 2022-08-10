@@ -101,7 +101,9 @@ class SocketService extends BaseService {
     }];
     if( this.lightningEnabled ) {
       filters.push({
-        topic : 'lightning'
+        topic : 'lightning',
+        key : 'data.apid',
+        regex : '^302$'
       });
     }
 
